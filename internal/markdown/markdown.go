@@ -1,7 +1,6 @@
 package markdown
 
 import (
-	"html"
 	"strings"
 )
 
@@ -33,12 +32,7 @@ func splitParagraphs(src string) []string {
 
 func Render(src string) string {
 	src = preprocess(src)
-
-	var parts []string
-	for _, blocks := range splitParagraphs(src) {
-		parts = append(parts, "<p>"+html.EscapeString(blocks)+"</p>\n")
-	}
-
-	return strings.Join(parts, "")
+	lines := strings.Split(src, "\n")
+	return renderBlocks(scanBlocks(lines))
 
 }
