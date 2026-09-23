@@ -1,6 +1,8 @@
 package markdown
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type blockKind int
 type alignKind int
@@ -58,5 +60,21 @@ func (k blockKind) String() string {
 		return "hr"
 	default:
 		return fmt.Sprintf("blockKind(%d)", int(k))
+	}
+}
+
+// String 把对齐方式转成 CSS text-align 的取值，供渲染 <th>/<td> 的 style 使用。
+// 返回值必须是 CSS 关键字 left/center/right，不能是 Go 的常量名：
+// 写成 "alignLeft" 会渲染出 text-align:alignLeft，浏览器不认，三列全部退化成左对齐
+func (a alignKind) String() string {
+	switch a {
+	case alignLeft:
+		return "left"
+	case alignCenter:
+		return "center"
+	case alignRight:
+		return "right"
+	default:
+		return fmt.Sprintf("alignKind(%d)", int(a))
 	}
 }

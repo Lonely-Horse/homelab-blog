@@ -10,7 +10,10 @@ import (
 )
 
 func Run() error {
-	cfg := config.Load()
+	cfg, err := config.Load()
+	if err != nil {
+		return err
+	}
 
 	database, err := db.Open(cfg)
 	if err != nil {
@@ -32,7 +35,8 @@ func Run() error {
 		w.Write([]byte(result))
 	})
 
-	http.ListenAndServe("0.0.0.0:8080", nil)
+	log.Printf("The server listen on the %s", cfg.ListenAddr)
+	http.ListenAndServe(cfg.ListenAddr, nil)
 
 	return nil
 }
