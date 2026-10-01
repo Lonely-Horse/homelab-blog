@@ -58,6 +58,7 @@ func Load() (Config, error) {
 		SessionTTL:          7 * 24 * time.Hour,
 		SessionTokenBytes:   32,
 		SessionCookieSecure: false,
+
 		//限流
 		LoginRatePerMin: 5,
 		LoginRateWindow: 60 * time.Second,

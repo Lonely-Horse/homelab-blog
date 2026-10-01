@@ -21,7 +21,7 @@ func readPassword(br *bufio.Reader) (string, error) {
 		return "", err
 	}
 	if line == "" {
-		return "", fmt.Errorf("[ERROR] The password is empty")
+		return "", errors.New("[ERROR] The password is empty")
 	}
 
 	line = strings.TrimSuffix(line, "\n")
@@ -50,11 +50,6 @@ func run(user string, reset bool) error {
 		return fmt.Errorf("[ERROR] The hash model used failed,detail: %w", err)
 	}
 
-	ok := auth.Verify(pwd, salt, hash, cfg.PBKDF2Iterations, cfg.PBKDF2KeyLength)
-	if !ok {
-		return errors.New("[ERROR] The hash and verify have problem")
-	}
-
 	database, err := db.Open(cfg)
 	if err != nil {
 		return fmt.Errorf("[ERROR] The database open failed,detail: %w", err)
@@ -70,6 +65,7 @@ func run(user string, reset bool) error {
 		if err != nil {
 			return fmt.Errorf("[ERROR] The database insert failed,detail: %w", err)
 		}
+		fmt.Printf("[INFO] Admin %q created successfully\n", user)
 
 	case err != nil:
 		return fmt.Errorf("[ERROR] The query admin: %w", err)
@@ -78,7 +74,14 @@ func run(user string, reset bool) error {
 		if !reset {
 			return fmt.Errorf("[ERROR] The admin %q already exists", user)
 		}
-		fmt.Printf("[INFO] The password is reset")
+
+		query2 := "UPDATE admins SET password_hash = ?, salt = ?, iterations = ? WHERE username = ?"
+		_, err = database.Exec(query2, hash, salt, cfg.PBKDF2Iterations, user)
+		if err != nil {
+			return fmt.Errorf("[ERROR] The update admin: %w", err)
+		}
+
+		fmt.Printf("[INFO] Admin %q update successfully\n", user)
 	}
 
 	return nil
@@ -92,4 +95,9 @@ func main() {
 	flag.BoolVar(&reset, "reset", false, "已存在时覆盖密码，默认拒绝")
 	flag.Parse()
 
+	err := run(user, reset)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
 }
