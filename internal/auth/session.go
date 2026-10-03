@@ -26,7 +26,7 @@ func generateToken(n int) (string, error) {
 	token := make([]byte, n)
 	_, err := rand.Read(token)
 	if err != nil {
-		return "", fmt.Errorf("token rand: %w", err)
+		return "", fmt.Errorf("[ERROR] token rand: %w", err)
 	}
 
 	tokenstr := hex.EncodeToString(token)
@@ -75,5 +75,53 @@ func (s *Service) ValidSession(token string) (int64, bool) {
 }
 
 func (s *Service) DeleteSession(token string) error {
+	query := "DELETE FROM sessions WHERE token = ?"
+	_, err := s.db.Exec(query, token)
+	if err != nil {
+		return fmt.Errorf("[ERROR] The delete session: %w", err)
+	}
+
 	return nil
+}
+
+func (s *Service) CleanExpired() error {
+	query := "DELETE FROM sessions WHERE expires_at < ?"
+	_, err := s.db.Exec(query, time.Now().UTC())
+	if err != nil {
+		return fmt.Errorf("[ERROR] The cleanexpired: %w", err)
+	}
+
+	return nil
+}
+
+func (s *Service) Login(username, password string) (string, error) {
+	var (
+		adminID    int64
+		storedHash []byte
+		storedSalt []byte
+		iterations int
+	)
+
+	query := "SELECT id,password_hash,salt,iterations FROM admins WHERE username = ?"
+	err := s.db.QueryRow(query, username).Scan(&adminID, &storedHash, &storedSalt, &iterations)
+
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		_, _, _ = Hash(password, s.cfg.PBKDF2Iterations, s.cfg.PBKDF2KeyLength, s.cfg.SaltLength)
+		return "", ErrInvalidCredentials
+
+	case err != nil:
+		return "", fmt.Errorf("[ERROR] The query admin: %w", err)
+	}
+
+	if !Verify(password, storedSalt, storedHash, iterations, s.cfg.PBKDF2KeyLength) {
+		return "", ErrInvalidCredentials
+	}
+
+	err = s.CleanExpired()
+	if err != nil {
+		log.Printf("The clean expired session: %v", err)
+	}
+
+	return s.CreateSession(adminID)
 }
