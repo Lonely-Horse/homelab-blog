@@ -20,12 +20,14 @@ func readPassword(br *bufio.Reader) (string, error) {
 	if err != io.EOF && err != nil {
 		return "", err
 	}
-	if line == "" {
-		return "", errors.New("[ERROR] The password is empty")
-	}
 
 	line = strings.TrimSuffix(line, "\n")
 	line = strings.TrimSuffix(line, "\r")
+
+	if strings.TrimSpace(line) == "" {
+		return "", errors.New("The password is empty")
+	}
+
 	return line, nil
 }
 
@@ -50,13 +52,17 @@ func run(user string, reset bool) error {
 		return fmt.Errorf("[ERROR] The hash model used failed,detail: %w", err)
 	}
 
+	if !auth.Verify(pwd, salt, hash, cfg.PBKDF2Iterations, cfg.PBKDF2KeyLength) {
+		return errors.New("The password hash isn't verify!")
+	}
+
 	database, err := db.Open(cfg)
 	if err != nil {
 		return fmt.Errorf("[ERROR] The database open failed,detail: %w", err)
 	}
 	defer database.Close()
 
-	var id int
+	var id int64
 	query := "SELECT id FROM admins WHERE username = ?"
 	err = database.QueryRow(query, user).Scan(&id)
 	switch {
@@ -75,13 +81,36 @@ func run(user string, reset bool) error {
 			return fmt.Errorf("[ERROR] The admin %q already exists", user)
 		}
 
+		tx, err := database.Begin()
+		if err != nil {
+			return fmt.Errorf("[ERROR] The begin: %w", err)
+		}
+		defer tx.Rollback()
+
 		query2 := "UPDATE admins SET password_hash = ?, salt = ?, iterations = ? WHERE username = ?"
-		_, err = database.Exec(query2, hash, salt, cfg.PBKDF2Iterations, user)
+		_, err = tx.Exec(query2, hash, salt, cfg.PBKDF2Iterations, user)
 		if err != nil {
 			return fmt.Errorf("[ERROR] The update admin: %w", err)
 		}
 
+		query3 := "DELETE FROM sessions WHERE admin_id = ?"
+		result, err := tx.Exec(query3, id)
+		if err != nil {
+			return fmt.Errorf("[ERROR] Other session delete: %w", err)
+		}
+
+		err = tx.Commit()
+		if err != nil {
+			return fmt.Errorf("[ERROR] The commit: %w", err)
+		}
+
+		n, err := result.RowsAffected()
+		if err != nil {
+			return fmt.Errorf("[ERROR] The delete session: %w", err)
+		}
+
 		fmt.Printf("[INFO] Admin %q update successfully\n", user)
+		fmt.Printf("[INFO] The %d sessions delete successfully\n", n)
 	}
 
 	return nil
