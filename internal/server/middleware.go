@@ -4,6 +4,7 @@ import (
 	"context"
 	"homelab-blog/internal/auth"
 	"homelab-blog/internal/config"
+	"html/template"
 	"net/http"
 	"strings"
 )
@@ -16,6 +17,7 @@ type Server struct {
 	cfg     config.Config
 	auth    *auth.Service
 	limiter *loginLimiter
+	tpl     *template.Template
 }
 
 // 检查cookie中的值是否符合数据库中的合法值

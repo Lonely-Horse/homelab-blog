@@ -16,13 +16,16 @@ func Run() error {
 
 	database, err := db.Open(cfg)
 	if err != nil {
-		log.Printf("The error is %s", err)
+		log.Printf("The Open database: %s", err)
 		return err
 	}
 	defer database.Close()
 
 	authSvc := auth.NewService(cfg, database)
-	srv := server.New(cfg, authSvc)
-
+	srv, err := server.New(cfg, authSvc)
+	if err != nil {
+		log.Printf("The New server: %s", err)
+		return err
+	}
 	return srv.Start()
 }
