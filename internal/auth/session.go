@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"homelab-blog/internal/config"
+	"homelab-blog/internal/db"
 	"log"
 	"time"
 )
@@ -40,7 +41,7 @@ func (s *Service) CreateSession(adminID int64) (string, error) {
 		return "", fmt.Errorf("[ERROR] The generate token: %w", err)
 	}
 
-	now := time.Now().UTC()
+	now := db.NowUTC()
 
 	query := "INSERT INTO sessions (token,admin_id,expires_at,created_at) VALUES (?,?,?,?)"
 
@@ -67,7 +68,7 @@ func (s *Service) ValidSession(token string) (int64, bool) {
 		return 0, false
 	}
 
-	if expiresAt.Before(time.Now().UTC()) {
+	if expiresAt.Before(time.Now()) {
 		return 0, false
 	}
 
@@ -86,7 +87,7 @@ func (s *Service) DeleteSession(token string) error {
 
 func (s *Service) CleanExpired() error {
 	query := "DELETE FROM sessions WHERE expires_at < ?"
-	_, err := s.db.Exec(query, time.Now().UTC())
+	_, err := s.db.Exec(query, db.NowUTC())
 	if err != nil {
 		return fmt.Errorf("[ERROR] The cleanexpired: %w", err)
 	}

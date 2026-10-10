@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 	"time"
@@ -36,6 +35,9 @@ type Config struct {
 	PBKDF2Iterations int
 	PBKDF2KeyLength  int
 	SaltLength       int
+
+	//博客文章版本
+	ParserVersion int
 }
 
 func Load() (Config, error) {
@@ -67,6 +69,9 @@ func Load() (Config, error) {
 		PBKDF2Iterations: 600000,
 		PBKDF2KeyLength:  32,
 		SaltLength:       16,
+
+		//博客文章版本
+		ParserVersion: 1,
 	}
 
 	valueStr, ok := os.LookupEnv("SESSION_COOKIE_SECURE")
@@ -77,6 +82,5 @@ func Load() (Config, error) {
 		}
 		cfg.SessionCookieSecure = value
 	}
-	log.Printf("https is %v now", cfg.SessionCookieSecure)
 	return cfg, nil
 }

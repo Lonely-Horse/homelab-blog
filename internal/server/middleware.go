@@ -42,7 +42,7 @@ func (s *Server) requireAuthPage(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		r2 := s.checkAuth(r)
 		if r2 == nil {
-			http.Redirect(w, r, "/admin/login", http.StatusFound)
+			http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
 			return
 		}
 		next.ServeHTTP(w, r2)

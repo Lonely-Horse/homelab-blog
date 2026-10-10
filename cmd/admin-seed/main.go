@@ -12,7 +12,6 @@ import (
 	"io"
 	"os"
 	"strings"
-	"time"
 )
 
 func readPassword(br *bufio.Reader) (string, error) {
@@ -67,7 +66,7 @@ func run(user string, reset bool) error {
 	err = database.QueryRow(query, user).Scan(&id)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
-		_, err = database.Exec("INSERT INTO admins (username,password_hash,salt,iterations,created_at) VALUES (?,?,?,?,?)", user, hash, salt, cfg.PBKDF2Iterations, time.Now().UTC().Format(time.RFC3339))
+		_, err = database.Exec("INSERT INTO admins (username,password_hash,salt,iterations,created_at) VALUES (?,?,?,?,?)", user, hash, salt, cfg.PBKDF2Iterations, db.NowUTC())
 		if err != nil {
 			return fmt.Errorf("[ERROR] The database insert failed,detail: %w", err)
 		}

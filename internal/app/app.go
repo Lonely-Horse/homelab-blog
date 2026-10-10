@@ -13,6 +13,7 @@ func Run() error {
 	if err != nil {
 		return err
 	}
+	log.Printf("https is %v now", cfg.SessionCookieSecure)
 
 	database, err := db.Open(cfg)
 	if err != nil {

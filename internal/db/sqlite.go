@@ -6,6 +6,7 @@ import (
 	"homelab-blog/internal/config"
 	"log"
 	"os"
+	"time"
 
 	_ "embed"
 
@@ -123,6 +124,10 @@ func migrate(db *sql.DB) error {
 	}
 
 	return tx.Commit()
+}
+
+func NowUTC() time.Time {
+	return time.Now().UTC()
 }
 
 func Open(cfg config.Config) (*sql.DB, error) {

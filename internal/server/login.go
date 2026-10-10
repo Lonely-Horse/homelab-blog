@@ -6,6 +6,7 @@ import (
 	"errors"
 	"homelab-blog/internal/auth"
 	"homelab-blog/internal/config"
+	"log"
 	"net"
 	"net/http"
 	"net/netip"
@@ -183,6 +184,7 @@ func (s *Server) renderLogin(w http.ResponseWriter, status int, data loginPageDa
 
 }
 
+// 登陆逻辑实现
 func (s *Server) handlerLoginAPI(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	err := r.ParseForm()
@@ -281,26 +283,18 @@ func (s *Server) handlerLoginPage(w http.ResponseWriter, r *http.Request) {
 	s.renderLogin(w, http.StatusOK, loginPageData{})
 }
 
+// 登出逻辑实现，本质就是删服务端和客户端session
 func (s *Server) handlerLogout(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	token, err := r.Cookie(s.cfg.SessionCookieName)
-	switch {
-	case errors.Is(err, http.ErrNoCookie):
-		http.Redirect(w, r, "/admin/login", http.StatusFound)
-		w.Write([]byte(`{"error":"cookie is empty"}`))
-		return
-
-	case err != nil:
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{"error":"get cookie failed"}`))
+	if errors.Is(err, http.ErrNoCookie) {
+		http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
 		return
 	}
 
 	err = s.auth.DeleteSession(token.Value)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{"error":"delete session failed"}`))
+		log.Printf("The delete session: %v", err)
+		http.Error(w, "删除数据失败，请再次尝试", http.StatusInternalServerError)
 		return
 	}
 
@@ -315,7 +309,5 @@ func (s *Server) handlerLogout(w http.ResponseWriter, r *http.Request) {
 	}
 	http.SetCookie(w, cookie)
 
-	http.Redirect(w, r, "/admin/login", http.StatusFound)
-	w.Write([]byte(`{"status":"ok"}`))
-
+	http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
 }
