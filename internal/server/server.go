@@ -4,12 +4,14 @@ import (
 	"context"
 	"homelab-blog/internal/auth"
 	"homelab-blog/internal/config"
+	"homelab-blog/internal/posts"
+	"homelab-blog/internal/profile"
 	"homelab-blog/web"
 	"html/template"
 	"net/http"
 )
 
-func New(cfg config.Config, authSvc *auth.Service) (*Server, error) {
+func New(cfg config.Config, authSvc *auth.Service, postStore *posts.Store, profile *profile.Store) (*Server, error) {
 	tpl, err := template.ParseFS(web.FS, "templates/*.html")
 	if err != nil {
 		return nil, err
@@ -17,6 +19,8 @@ func New(cfg config.Config, authSvc *auth.Service) (*Server, error) {
 	return &Server{
 		cfg:     cfg,
 		auth:    authSvc,
+		posts:   postStore,
+		profile: profile,
 		limiter: newLoginLimiter(cfg),
 		tpl:     tpl,
 	}, nil

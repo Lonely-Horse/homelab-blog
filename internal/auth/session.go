@@ -17,8 +17,8 @@ type Service struct {
 	db  *sql.DB
 }
 
-func NewService(cfg config.Config, db *sql.DB) *Service {
-	return &Service{cfg: cfg, db: db}
+func NewService(cfg config.Config, database *sql.DB) *Service {
+	return &Service{cfg: cfg, db: database}
 }
 
 var ErrInvalidCredentials = errors.New("invalid username or password")

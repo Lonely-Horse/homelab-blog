@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>文章后台</title>
+</head>
+<body>
+  <header>
+    <h1>文章后台</h1>
+    <nav>
+      <a href="/admin/posts/new">＋ 新建文章</a>
+      <form method="post" action="/admin/logout"><button type="submit">退出登录</button></form>
+    </nav>
+  </header>
+
+  {{if .List}}
+  <table>
+    <thead>
+      <tr>
+        <th>标题</th>
+        <th>Slug</th>
+        <th>状态</th>
+        <th>更新时间</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{range .List}}
+      <tr>
+        <td>{{.Title}}</td>
+        <td>{{.Slug}}</td>
+        <td>{{if eq .Status "published"}}已发布{{else}}草稿{{end}}</td>
+        <td>{{.UpdatedAt.Format "2006-01-02 15:04"}}</td>
+        <td>
+          <a href="/admin/posts/{{.ID}}/edit">编辑</a>
+          <button type="button" class="js-delete" data-id="{{.ID}}">删除</button>
+        </td>
+      </tr>
+      {{end}}
+    </tbody>
+  </table>
+  {{else}}
+  <p>还没有文章。</p>
+  {{end}}
+</body>
+</html>

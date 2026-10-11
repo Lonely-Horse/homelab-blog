@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Homelab Blog</title>
+</head>
+<body>
+  <h1>文章列表</h1>
+  {{if .List}}
+  <ul>
+    {{range .List}}
+    <li>
+      <a href="/post/{{.Slug}}">{{.Title}}</a>
+      {{if .Summary}}<p>{{.Summary}}</p>{{end}}
+    </li>
+    {{end}}
+  </ul>
+  {{else}}
+  <p>还没有发布的文章。</p>
+  {{end}}
+</body>
+</html>

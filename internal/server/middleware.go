@@ -4,6 +4,8 @@ import (
 	"context"
 	"homelab-blog/internal/auth"
 	"homelab-blog/internal/config"
+	"homelab-blog/internal/posts"
+	"homelab-blog/internal/profile"
 	"html/template"
 	"net/http"
 	"strings"
@@ -16,6 +18,8 @@ const ctxKeyAdminID ctxKey = iota
 type Server struct {
 	cfg     config.Config
 	auth    *auth.Service
+	posts   *posts.Store
+	profile *profile.Store
 	limiter *loginLimiter
 	tpl     *template.Template
 }
