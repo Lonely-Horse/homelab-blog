@@ -3,39 +3,46 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{if .IsNew}}新建文章{{else}}编辑文章{{end}}</title>
+  <title>{{if .IsNew}}新建文章{{else}}编辑文章{{end}} · LonelyHorse</title>
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/app.js"></script>
 </head>
 <body>
-  <header>
-    <h1>{{if .IsNew}}新建文章{{else}}编辑文章{{end}}</h1>
-    <nav>
-      <a href="/admin">← 返回后台</a>
-    </nav>
-  </header>
+  {{template "admin-nav" .}}
 
-  {{if .Error}}<p class="form-error">{{.Error}}</p>{{end}}
+  <main class="container">
+    <p class="back-row"><a class="navlink" href="/admin/posts">← 返回文章后台</a></p>
 
-  <form method="post" action="{{.FormAction}}">
-    <p>
-      <label for="title">标题</label><br>
-      <input id="title" name="title" type="text" value="{{.Post.Title}}" required>
-    </p>
-    <p>
-      <label for="slug">Slug（URL 标识，如 hello-world）</label><br>
-      <input id="slug" name="slug" type="text" value="{{.Post.Slug}}" required>
-    </p>
-    <p>
-      <label for="summary">摘要</label><br>
-      <textarea id="summary" name="summary" rows="3">{{.Post.Summary}}</textarea>
-    </p>
-    <p>
-      <label for="content_md">正文（Markdown）</label><br>
-      <textarea id="content_md" name="content_md" rows="20">{{.Post.ContentMD}}</textarea>
-    </p>
-    <p>
-      <button type="submit" name="status" value="draft">存草稿</button>
-      <button type="submit" name="status" value="published">发布</button>
-    </p>
-  </form>
+    <header class="page-head">
+      <h1>{{if .IsNew}}新建文章{{else}}编辑文章{{end}}</h1>
+    </header>
+
+    {{if .Error}}<p class="notice" role="alert">{{.Error}}</p>{{end}}
+
+    <form class="panel panel-pad" method="post" action="{{.FormAction}}">
+      <p>
+        <label for="title">标题</label>
+        <input id="title" name="title" type="text" value="{{.Post.Title}}" required>
+      </p>
+      <p>
+        <label for="slug">Slug（URL 标识，如 hello-world）</label>
+        <input id="slug" name="slug" type="text" value="{{.Post.Slug}}" required>
+      </p>
+      <p>
+        <label for="summary">摘要</label>
+        <textarea id="summary" name="summary" rows="3">{{.Post.Summary}}</textarea>
+      </p>
+      <p>
+        <label for="content_md">正文（Markdown）</label>
+        <textarea id="content_md" name="content_md" rows="20">{{.Post.ContentMD}}</textarea>
+      </p>
+      <p>
+        <button class="btn btn-ghost" type="submit" name="status" value="draft">存草稿</button>
+        <button class="btn" type="submit" name="status" value="published">发布</button>
+      </p>
+    </form>
+  </main>
+
+  {{template "site-footer" .}}
 </body>
 </html>

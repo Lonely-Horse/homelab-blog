@@ -3,14 +3,29 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{.Title}}</title>
+  <title>{{.Title}} · LonelyHorse</title>
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/app.js"></script>
 </head>
 <body>
-  <article>
-    <h1>{{.Title}}</h1>
-    <p>{{.Summary}}</p>
-    {{.ContentHTML}}
-  </article>
-  <p><a href="/">← 返回首页</a></p>
+  {{template "site-nav" .}}
+
+  <main class="container">
+    <p class="back-row"><a class="navlink" href="/posts">← 返回文章</a></p>
+
+    <article class="panel article">
+      <header class="article-head">
+        <h1>{{.Title}}</h1>
+        {{if .Summary}}<p class="article-summary">{{.Summary}}</p>{{end}}
+      </header>
+      <div class="prose">{{.ContentHTML}}</div>
+
+      {{if not .UpdateAt.IsZero}}
+      <p class="muted updated-at">最后更新：{{.UpdateAt.Local.Format "2006-01-02 15:04"}}</p>
+      {{end}}
+    </article>
+  </main>
+
+  {{template "site-footer" .}}
 </body>
 </html>

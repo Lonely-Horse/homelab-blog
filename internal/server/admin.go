@@ -22,7 +22,7 @@ type AdminEditPageData struct {
 }
 
 func (s *Server) handlerAdmin(w http.ResponseWriter, r *http.Request) {
-	http.Redirect(w, r, "/admin/posts", http.StatusSeeOther)
+	s.render(w, http.StatusOK, "admin_home.html", nil)
 }
 
 func (s *Server) handlerAdminShowPost(w http.ResponseWriter, r *http.Request) {

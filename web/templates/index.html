@@ -3,21 +3,36 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Homelab Blog</title>
+  <title>博客 · LonelyHorse</title>
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/app.js"></script>
 </head>
 <body>
-  <h1>文章列表</h1>
-  {{if .List}}
-  <ul>
-    {{range .List}}
-    <li>
-      <a href="/post/{{.Slug}}">{{.Title}}</a>
-      {{if .Summary}}<p>{{.Summary}}</p>{{end}}
-    </li>
+  {{template "site-nav" .}}
+
+  <main class="container">
+    <header class="page-head">
+      <h1>博客</h1>
+      <p class="muted">共 {{len .List}} 篇</p>
+    </header>
+
+    {{if .List}}
+    <ul class="post-list">
+      {{range .List}}
+      <li>
+        <a class="post-card" href="/post/{{.Slug}}">
+          {{with .PublishedAt}}<time class="post-card-date">{{.Local.Format "2006-01-02"}}</time>{{end}}
+          <h2 class="post-card-title">{{.Title}}</h2>
+          {{if .Summary}}<p class="post-card-summary">{{.Summary}}</p>{{end}}
+        </a>
+      </li>
+      {{end}}
+    </ul>
+    {{else}}
+    <p class="muted">还没有发布的文章。</p>
     {{end}}
-  </ul>
-  {{else}}
-  <p>还没有发布的文章。</p>
-  {{end}}
+  </main>
+
+  {{template "site-footer" .}}
 </body>
 </html>

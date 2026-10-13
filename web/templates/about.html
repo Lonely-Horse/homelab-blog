@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>关于 · LonelyHorse</title>
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/app.js"></script>
+</head>
+<body>
+  {{template "site-nav" .}}
+
+  <main class="container">
+    <header class="page-head">
+      <h1>关于本站</h1>
+      <p class="muted">Go · 云原生 · DevOps</p>
+    </header>
+
+    <section class="panel article about-intro">
+      <div class="prose">
+        {{if .ContentHTML}}
+        {{.ContentHTML}}
+        {{else}}
+        <p class="muted">站主还没有填写简介。</p>
+        {{end}}
+      </div>
+    </section>
+
+    <ul class="stats">
+      <li class="stat">
+        <span class="stat-num">{{.Posts}}</span>
+        <span class="muted">已发布文章</span>
+      </li>
+      <li class="stat">
+        <span class="stat-num" data-stat="projects">0</span>
+        <span class="muted">项目</span>
+      </li>
+    </ul>
+
+    {{if not .UpdatedAt.IsZero}}
+    <p class="muted updated-at">最后更新：{{.UpdatedAt.Local.Format "2006-01-02 15:04"}}</p>
+    {{end}}
+  </main>
+
+  {{template "site-footer" .}}
+</body>
+</html>

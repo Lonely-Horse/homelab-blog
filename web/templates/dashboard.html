@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LonelyHorse</title>
+  <!-- 样式与脚本一律外链（CSP style-src/script-src 'self'，禁内联）
+       app.js 放在 head 同步执行：主题需在首屏绘制前落到 <html data-theme>，否则暗->亮切换会闪 -->
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/app.js"></script>
+</head>
+<body>
+  <!-- 幕布（B 模型）：/ 为纯幕布，零后端数据；点击 / 回车 / 上拉后跳 data-enter -->
+  <div class="curtain" id="curtain" data-enter="/posts" role="button" tabindex="0" aria-label="点击或上拉进入文章">
+    <div class="curtain-inner">
+      <h1 class="curtain-title">LONELYHORSE</h1>
+      <p class="curtain-tagline">Go · 云原生 · DevOps</p>
+      <p class="curtain-hint">点击，或上拉进入</p>
+    </div>
+    <span class="curtain-grip" aria-hidden="true">↑</span>
+  </div>
+
+  <noscript>
+    <div class="center-page">
+      <a class="btn" href="/posts">进入文章</a>
+    </div>
+  </noscript>
+</body>
+</html>

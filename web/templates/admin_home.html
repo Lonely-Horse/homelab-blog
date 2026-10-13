@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>后台 · LonelyHorse</title>
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/app.js"></script>
+</head>
+<body>
+  {{template "admin-nav" .}}
+
+  <main class="container">
+    <header class="page-head">
+      <h1>后台</h1>
+      <p class="muted">已登录 · 选择要进行的操作</p>
+    </header>
+
+    <ul class="hub-grid">
+      <li>
+        <a class="hub-card" href="/admin/posts">
+          <span class="hub-card-title">文章后台</span>
+          <span class="hub-card-desc">新建、编辑、发布与删除文章</span>
+        </a>
+      </li>
+      <li>
+        <a class="hub-card" href="/about/edit">
+          <span class="hub-card-title">编辑个人简介</span>
+          <span class="hub-card-desc">修改「关于」页的 Markdown 内容</span>
+        </a>
+      </li>
+      <li>
+        <span class="hub-card is-disabled" aria-disabled="true">
+          <span class="hub-card-title">项目后台</span>
+          <span class="hub-card-desc">尚未开放</span>
+        </span>
+      </li>
+      <li>
+        <a class="hub-card" href="/posts">
+          <span class="hub-card-title">回到前台站点</span>
+          <span class="hub-card-desc">以访客视角查看文章列表</span>
+        </a>
+      </li>
+    </ul>
+
+    <section class="panel panel-pad hub-session">
+      <h2>会话</h2>
+      <p class="muted">退出后需重新登录才能继续管理内容。</p>
+      <form method="post" action="/admin/logout">
+        <button class="btn btn-ghost" type="submit">退出登录</button>
+      </form>
+    </section>
+  </main>
+
+  {{template "site-footer" .}}
+</body>
+</html>

@@ -6,6 +6,7 @@ import (
 	"homelab-blog/internal/posts"
 	"html/template"
 	"net/http"
+	"time"
 )
 
 type IndexPageData struct {
@@ -16,11 +17,19 @@ type PostsPageData struct {
 	Title       string
 	Summary     string
 	ContentHTML template.HTML
+	UpdateAt    time.Time
 }
 
 type ErrorPageData struct {
 	Status  int
 	Message string
+}
+
+type AboutPageData struct {
+	Posts       int
+	ContentHTML template.HTML
+	UpdatedAt   time.Time
+	IsAdmin     bool
 }
 
 func (s *Server) handlerHealthz(w http.ResponseWriter, r *http.Request) {
@@ -70,6 +79,10 @@ func (s *Server) handlerPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.render(w, http.StatusOK, "post.html", PostsPageData{Title: post.Title, Summary: post.Summary, ContentHTML: template.HTML(post.ContentHTML)})
+	s.render(w, http.StatusOK, "post.html", PostsPageData{Title: post.Title, Summary: post.Summary, ContentHTML: template.HTML(post.ContentHTML), UpdateAt: post.UpdatedAt})
 
+}
+
+func (s *Server) handlerDashboardPage(w http.ResponseWriter, r *http.Request) {
+	s.render(w, http.StatusOK, "dashboard.html", nil)
 }

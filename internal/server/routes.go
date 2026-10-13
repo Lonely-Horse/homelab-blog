@@ -1,10 +1,25 @@
 package server
 
-import "net/http"
+import (
+	"io/fs"
+	"net/http"
+
+	"homelab-blog/web"
+)
 
 func (s *Server) routes() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", s.handlerHealthz)
+
+	// 静态资源：只暴露 embed 里的 static 子树，绝不能把整棵 FS（含 templates）挂出去
+	staticFS, err := fs.Sub(web.FS, "static")
+	if err != nil {
+		// //go:embed static 已在编译期保证目录存在，走到这里说明 embed 指令被改坏
+		panic("web: static 子树缺失: " + err.Error())
+	}
+	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServerFS(staticFS)))
+
+	mux.HandleFunc("GET /{$}", s.handlerDashboardPage)
 	mux.Handle("GET /admin", s.requireAuthPage(http.HandlerFunc(s.handlerAdmin)))
 	mux.HandleFunc("GET /admin/login", s.handlerLoginPage)
 	mux.HandleFunc("POST /admin/login", s.handlerLoginForm)
@@ -16,7 +31,11 @@ func (s *Server) routes() *http.ServeMux {
 	mux.Handle("POST /admin/posts/{id}", s.requireAuthPage(http.HandlerFunc(s.handlerUpdatePost)))
 	mux.Handle("DELETE /admin/posts/{id}", s.requireAuthAPI(http.HandlerFunc(s.handlerDeletePost)))
 
-	mux.HandleFunc("GET /{$}", s.handlerIndex)
+	mux.HandleFunc("GET /about", s.handlerAboutPage)
+	mux.Handle("POST /about/edit", s.requireAuthPage(http.HandlerFunc(s.handlerAboutSavePage)))
+	mux.Handle("GET /about/edit", s.requireAuthPage(http.HandlerFunc(s.handlerAboutEditPage)))
+
+	mux.HandleFunc("GET /posts", s.handlerIndex)
 	mux.HandleFunc("GET /post/{slug}", s.handlerPost)
 
 	mux.HandleFunc("POST /api/admin/login", s.handlerLoginAPI)

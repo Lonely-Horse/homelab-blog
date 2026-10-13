@@ -1,0 +1,57 @@
+{{define "theme-toggle"}}
+<button class="theme-toggle" type="button" data-theme-toggle aria-label="切换主题" title="切换明暗主题">◐</button>
+{{end}}
+
+{{define "back-btn"}}
+<button class="back-fab" type="button" data-back data-fallback="/posts" aria-label="返回上一页" title="返回上一页">
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+       stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M15 5l-7 7 7 7"></path>
+  </svg>
+  <span class="back-fab-text">返回</span>
+</button>
+{{end}}
+
+{{define "site-nav"}}
+<nav class="site-nav">
+  <div class="container">
+    <a class="brand" href="/posts">LonelyHorse</a>
+    <a class="navlink" href="/posts">博客</a>
+    <a class="navlink" href="/projects">项目</a>
+    <a class="navlink" href="/about">关于</a>
+    <span class="spacer"></span>
+    {{template "theme-toggle" .}}
+    <a class="nav-icon" href="/admin" aria-label="管理员后台" title="管理员后台">
+      <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor"
+           stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="8" r="3.6"></circle>
+        <path d="M5.4 19.4a6.6 6.6 0 0 1 13.2 0"></path>
+      </svg>
+    </a>
+  </div>
+  {{template "back-btn" .}}
+</nav>
+{{end}}
+
+{{define "site-footer"}}
+<footer class="site-footer">
+  <div class="container">
+    <span class="brand-mark">LONELYHORSE</span>
+    <span>Go · 云原生 · DevOps</span>
+    <span class="spacer"></span>
+    <span>© 2026</span>
+  </div>
+</footer>
+{{end}}
+
+{{define "admin-nav"}}
+<nav class="site-nav">
+  <div class="container">
+    <a class="brand" href="/posts">LonelyHorse</a>
+    <a class="navlink" href="/admin/posts/new">＋ 新建文章</a>
+    <span class="spacer"></span>
+    {{template "theme-toggle" .}}
+  </div>
+  {{template "back-btn" .}}
+</nav>
+{{end}}

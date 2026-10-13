@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>编辑站主简介 · LonelyHorse</title>
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/app.js"></script>
+</head>
+<body>
+  {{template "admin-nav" .}}
+
+  <main class="container">
+    <p class="back-row"><a class="navlink" href="/admin">← 返回后台首页</a></p>
+
+    <header class="page-head">
+      <h1>编辑站主简介</h1>
+      <p class="muted">支持 Markdown 语法，保存后立即生效。</p>
+    </header>
+
+    <form class="panel panel-pad" method="post" action="/about/edit">
+      <p>
+        <label for="content_md">简介（Markdown）</label>
+        <textarea id="content_md" name="content_md" rows="20">{{.ContentMD}}</textarea>
+      </p>
+      <p>
+        <button class="btn" type="submit">保存</button>
+      </p>
+    </form>
+  </main>
+
+  {{template "site-footer" .}}
+</body>
+</html>

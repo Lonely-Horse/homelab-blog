@@ -1,29 +1,40 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
+<!doctype html>
+<html lang="zh">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>管理员登录</title>
+  <title>管理员登录 · LonelyHorse</title>
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/app.js"></script>
 </head>
 <body>
-  <main>
-    <h1>管理员登录</h1>
+  <main class="center-page">
+    <div class="panel auth-card">
+      <header class="auth-head">
+        <span class="auth-brand">LonelyHorse</span>
+        <h1>管理员登录</h1>
+      </header>
 
-    {{if .Error}}
-    <p role="alert">{{.Error}}</p>
-    {{end}}
+      {{if .Error}}
+      <p class="notice" role="alert">{{.Error}}</p>
+      {{end}}
 
-    <form method="post" action="">
-      <p>
-        <label for="username">用户名</label>
-        <input id="username" type="text" name="username" autocomplete="username" required>
-      </p>
-      <p>
-        <label for="password">密码</label>
-        <input id="password" type="password" name="password" autocomplete="current-password" required>
-      </p>
-      <button type="submit">登录</button>
-    </form>
+      <form method="post" action="">
+        <p>
+          <label for="username">用户名</label>
+          <input id="username" type="text" name="username" autocomplete="username" required>
+        </p>
+        <p>
+          <label for="password">密码</label>
+          <input id="password" type="password" name="password" autocomplete="current-password" required>
+        </p>
+        <p class="auth-actions">
+          <button class="btn btn-block" type="submit">登录</button>
+        </p>
+      </form>
+
+      <p class="auth-foot"><a class="navlink" href="/posts">← 返回文章</a></p>
+    </div>
   </main>
 </body>
 </html>

@@ -3,7 +3,6 @@ package profile
 import (
 	"database/sql"
 	"errors"
-	"homelab-blog/internal/db"
 )
 
 type Store struct {
@@ -27,10 +26,7 @@ func (s *Store) Get() (*Profile, error) {
 
 	query2 := "SELECT COUNT(*) FROM posts WHERE status = ?"
 	err = s.db.QueryRow(query2, "published").Scan(&profile.Posts)
-	switch {
-	case errors.Is(err, sql.ErrNoRows):
-		return &profile, nil
-	case err != nil:
+	if err != nil {
 		return nil, err
 	}
 
@@ -39,7 +35,7 @@ func (s *Store) Get() (*Profile, error) {
 
 func (s *Store) Save(p *Profile) error {
 	query := "INSERT INTO site_profile(id,content_md,updated_at) VALUES (1,?,?) ON CONFLICT(id) DO UPDATE SET content_md = excluded.content_md,updated_at = excluded.updated_at"
-	_, err := s.db.Exec(query, p.ContentMD, db.NowUTC())
+	_, err := s.db.Exec(query, p.ContentMD, p.UpdatedAt)
 	if err != nil {
 		return err
 	}
