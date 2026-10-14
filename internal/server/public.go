@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"homelab-blog/internal/posts"
+	"homelab-blog/internal/projects"
 	"html/template"
 	"net/http"
 	"time"
@@ -30,6 +31,10 @@ type AboutPageData struct {
 	ContentHTML template.HTML
 	UpdatedAt   time.Time
 	IsAdmin     bool
+}
+
+type ProjectPageData struct {
+	List []*projects.Project
 }
 
 func (s *Server) handlerHealthz(w http.ResponseWriter, r *http.Request) {
@@ -85,4 +90,14 @@ func (s *Server) handlerPost(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handlerDashboardPage(w http.ResponseWriter, r *http.Request) {
 	s.render(w, http.StatusOK, "dashboard.html", nil)
+}
+
+func (s *Server) handlerProjectsPage(w http.ResponseWriter, r *http.Request) {
+	list, err := s.projects.ListPublished()
+	if err != nil {
+		s.render(w, http.StatusInternalServerError, "error.html", ErrorPageData{Status: http.StatusInternalServerError, Message: "The Internal Server Error"})
+		return
+	}
+
+	s.render(w, http.StatusOK, "projects.html", ProjectPageData{List: list})
 }

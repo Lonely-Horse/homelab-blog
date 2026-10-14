@@ -6,6 +6,7 @@ import (
 	"homelab-blog/internal/db"
 	"homelab-blog/internal/posts"
 	"homelab-blog/internal/profile"
+	"homelab-blog/internal/projects"
 	"homelab-blog/internal/server"
 	"log"
 )
@@ -27,7 +28,8 @@ func Run() error {
 	authSvc := auth.NewService(cfg, database)
 	postStore := posts.NewStore(cfg, database)
 	profile := profile.NewStore(database)
-	srv, err := server.New(cfg, authSvc, postStore, profile)
+	projects := projects.NewStore(database)
+	srv, err := server.New(cfg, authSvc, postStore, profile, projects)
 	if err != nil {
 		log.Printf("The New server: %s", err)
 		return err

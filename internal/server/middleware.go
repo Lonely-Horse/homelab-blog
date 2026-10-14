@@ -6,6 +6,7 @@ import (
 	"homelab-blog/internal/config"
 	"homelab-blog/internal/posts"
 	"homelab-blog/internal/profile"
+	"homelab-blog/internal/projects"
 	"html/template"
 	"net/http"
 	"strings"
@@ -16,12 +17,13 @@ type ctxKey int
 const ctxKeyAdminID ctxKey = iota
 
 type Server struct {
-	cfg     config.Config
-	auth    *auth.Service
-	posts   *posts.Store
-	profile *profile.Store
-	limiter *loginLimiter
-	tpl     *template.Template
+	cfg      config.Config
+	auth     *auth.Service
+	posts    *posts.Store
+	profile  *profile.Store
+	projects *projects.Store
+	limiter  *loginLimiter
+	tpl      *template.Template
 }
 
 // 检查cookie中的值是否符合数据库中的合法值
