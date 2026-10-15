@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS projects (
     summary      TEXT     NOT NULL,
     github_url   TEXT     NOT NULL,
     demo_url     TEXT     DEFAULT '',
+    archive_path TEXT     NOT NULL DEFAULT '',
     tech_stack   TEXT     DEFAULT '',
     cover_image  TEXT     DEFAULT '',
     status       TEXT     NOT NULL DEFAULT 'active',

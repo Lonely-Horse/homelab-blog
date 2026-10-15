@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>项目 · LonelyHorse</title>
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/app.js"></script>
+</head>
+<body>
+  {{template "site-nav" .}}
+
+  <main class="container">
+    <header class="page-head">
+      <h1>项目</h1>
+      <p class="muted">共 {{len .List}} 个</p>
+    </header>
+
+    {{if .List}}
+    <ul class="project-list">
+      {{range .List}}
+      <li>
+        <article class="project-card{{if eq .Status "archived"}} is-archived{{end}}">
+          {{if eq .Status "archived"}}<span class="project-badge">已归档</span>{{end}}
+          <h2 class="project-card-title">{{if .Featured}}<span class="project-star" title="置顶" aria-label="置顶">★</span> {{end}}{{.Title}}</h2>
+          {{if .Summary}}<p class="project-card-summary">{{.Summary}}</p>{{end}}
+          {{with .Tags}}
+          <ul class="project-tags">
+            {{range .}}<li class="project-tag">{{.}}</li>{{end}}
+          </ul>
+          {{end}}
+          <p class="project-links">
+            {{if .GithubURL}}<a class="btn btn-ghost btn-sm" href="{{.GithubURL}}" target="_blank" rel="noopener noreferrer">Source ↗</a>{{end}}
+            {{if .DemoURL}}<a class="btn btn-ghost btn-sm" href="{{.DemoURL}}" target="_blank" rel="noopener noreferrer">Demo ↗</a>{{end}}
+          </p>
+        </article>
+      </li>
+      {{end}}
+    </ul>
+    {{else}}
+    <p class="muted">还没有项目。</p>
+    {{end}}
+  </main>
+
+  {{template "site-footer" .}}
+</body>
+</html>

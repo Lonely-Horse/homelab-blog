@@ -1,21 +1,21 @@
 package server
 
 import (
+	"bytes"
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"homelab-blog/internal/markdown"
 	"homelab-blog/internal/posts"
 	"homelab-blog/internal/projects"
+	"io"
 	"log"
 	"net/http"
-	"regexp"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
-)
-
-var (
-	ErrNotFound  = errors.New("post not found")
-	ErrDuplicate = errors.New("post slug already exists")
 )
 
 type AdminPostPageData struct {
@@ -206,14 +206,12 @@ type AdminProjectEditPageData struct {
 	Project    *projects.Project
 }
 
-var projectSlugRe = regexp.MustCompilePOSIX("^[a-z0-9-]+$")
-
-func ParseProjectForm(r *http.Request) (*projects.Project, error) {
+func parseProjectForm(r *http.Request) (*projects.Project, error) {
 	title := strings.TrimSpace(r.PostForm.Get("title"))
 	slug := strings.TrimSpace(r.PostForm.Get("slug"))
 	summary := strings.TrimSpace(r.PostForm.Get("summary"))
-	githubURl := strings.TrimSpace(r.PostForm.Get("github_url"))
-	demoURl := strings.TrimSpace(r.PostForm.Get("demo_url"))
+	githubURL := strings.TrimSpace(r.PostForm.Get("github_url"))
+	demoURL := strings.TrimSpace(r.PostForm.Get("demo_url"))
 	coverImage := strings.TrimSpace(r.PostForm.Get("cover_image"))
 	status := strings.TrimSpace(r.PostForm.Get("status"))
 	techStack := strings.TrimSpace(r.PostForm.Get("tech_stack"))
@@ -221,39 +219,41 @@ func ParseProjectForm(r *http.Request) (*projects.Project, error) {
 	featured := r.PostForm.Has("featured")
 
 	sortOrder, err := strconv.Atoi(strings.TrimSpace(r.PostForm.Get("sort_order")))
-	switch {
-	case err != nil:
-		return nil, err
-	case sortOrder == 0:
-		return nil, errors.New("The sort_order not exists")
+	if err != nil {
+		sortOrder = 0
+	}
+
+	p := &projects.Project{
+		Slug:       slug,
+		Title:      title,
+		Summary:    summary,
+		GithubURL:  githubURL,
+		DemoURL:    demoURL,
+		CoverImage: coverImage,
+		Status:     status,
+		TechStack:  techStack,
+		SortOrder:  sortOrder,
+		Featured:   featured,
 	}
 
 	switch {
 	case title == "":
-		return nil, errors.New("The title is empty")
+		return p, errors.New("The title is empty")
+	case slug == "":
+		return p, errors.New("The slug is empty")
 	case len(title) > 250:
-		return nil, errors.New("The title too long")
+		return p, errors.New("The title too long")
 	case summary == "":
-		return nil, errors.New("The summary is empty")
-	case !strings.HasPrefix(githubURl, "https://github.com/"):
-		return nil, errors.New("The github url is bad")
-	case demoURl != "" && !strings.HasPrefix(demoURl, "https://"):
-		return nil, errors.New("The URL is illegal")
+		return p, errors.New("The summary is empty")
+	case !strings.HasPrefix(githubURL, "https://github.com/"):
+		return p, errors.New("The github url is bad")
+	case demoURL != "" && !strings.HasPrefix(demoURL, "https://"):
+		return p, errors.New("The URL is illegal")
 	case status != "active" && status != "archived":
-		return nil, errors.New("The status is illegal")
+		return p, errors.New("The status is illegal")
 	}
 
-	return &projects.Project{
-		Slug:       slug,
-		Title:      title,
-		Summary:    summary,
-		GithubURL:  githubURl,
-		DemoURL:    demoURl,
-		CoverImage: coverImage,
-		Status:     status,
-		TechStack:  techStack,
-		Featured:   featured,
-	}, nil
+	return p, nil
 }
 
 func (s *Server) handlerAdminShowProject(w http.ResponseWriter, r *http.Request) {
@@ -272,25 +272,101 @@ func (s *Server) handlerNewProjectPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handlerCreateProject(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
-	if err != nil {
-		s.render(w, http.StatusBadRequest, "error.html", ErrorPageData{Status: http.StatusBadRequest, Message: "The quest bad"})
+	r.Body = http.MaxBytesReader(w, r.Body, s.cfg.MaxUploadBytes)
+	err := r.ParseMultipartForm(s.cfg.UploadMemoryBytes)
+	var maxErr *http.MaxBytesError
+	switch {
+	case errors.As(err, &maxErr):
+		s.render(w, http.StatusRequestEntityTooLarge, "error.html", ErrorPageData{Status: http.StatusRequestEntityTooLarge, Message: "The body too large"})
+		return
+	case err != nil:
+		s.render(w, http.StatusBadRequest, "error.html", ErrorPageData{Status: http.StatusBadRequest, Message: "The request is bad"})
 		return
 	}
 
-	p, err := ParseProjectForm(r)
+	p, err := parseProjectForm(r)
 	if err != nil {
-		s.render(w, http.StatusInternalServerError, "error.html", ErrorPageData{Status: http.StatusInternalServerError, Message: "The Inernal Server Error"})
+		s.render(w, http.StatusBadRequest, "admin_project_edit.html", AdminProjectEditPageData{IsNew: true, FormAction: "/admin/projects", Error: err.Error(), Project: p})
 		return
+	}
+
+	f, _, err := r.FormFile("archive")
+	switch {
+	case errors.Is(err, http.ErrMissingFile):
+
+	case err != nil:
+		s.render(w, http.StatusBadRequest, "admin_project_edit.html", AdminProjectEditPageData{IsNew: true, FormAction: "/admin/projects", Error: err.Error(), Project: p})
+		return
+	default:
+		defer f.Close()
+		head := make([]byte, 4)
+		_, err = io.ReadFull(f, head)
+		if err != nil {
+			s.render(w, http.StatusBadRequest, "admin_project_edit.html", AdminProjectEditPageData{IsNew: true, FormAction: "/admin/projects", Error: "文件读取问题", Project: p})
+			return
+		}
+		if !bytes.Equal(head, []byte{'P', 'K', 3, 4}) {
+			s.render(w, http.StatusBadRequest, "admin_project_edit.html", AdminProjectEditPageData{IsNew: true, FormAction: "/admin/projects", Error: "文件读取问题", Project: p})
+			return
+		}
+
+		buf := make([]byte, 16)
+		_, err = io.ReadFull(rand.Reader, buf)
+		if err != nil {
+			s.render(w, http.StatusBadRequest, "admin_project_edit.html", AdminProjectEditPageData{IsNew: true, FormAction: "/admin/projects", Error: err.Error(), Project: p})
+			return
+		}
+
+		name := hex.EncodeToString(buf) + ".zip"
+
+		dest, err := os.Create(filepath.Join(s.cfg.UploadsDir, name))
+		if err != nil {
+			s.render(w, http.StatusInternalServerError, "error.html", ErrorPageData{Status: http.StatusInternalServerError, Message: "The Internal Server Error"})
+			return
+		}
+		defer dest.Close()
+
+		_, err = f.Seek(0, io.SeekStart)
+		if err != nil {
+			s.render(w, http.StatusInternalServerError, "error.html", ErrorPageData{Status: http.StatusInternalServerError, Message: "The Internal Server Error"})
+			err := os.Remove(filepath.Join(s.cfg.UploadsDir, name))
+			if err != nil {
+				log.Printf("The %s remove failed,detail: %s", name, err)
+			}
+			return
+		}
+
+		_, err = io.Copy(dest, f)
+		if err != nil {
+			s.render(w, http.StatusInternalServerError, "error.html", ErrorPageData{Status: http.StatusInternalServerError, Message: "The Internal Server Error"})
+			err := os.Remove(filepath.Join(s.cfg.UploadsDir, name))
+			if err != nil {
+				log.Printf("The %s remove failed,detail: %s", name, err)
+			}
+			return
+		}
+		p.ArchivePath = name
 	}
 
 	_, err = s.projects.Create(p)
 	switch {
-	case errors.Is(err, ErrDuplicate):
-		s.render(w, http.StatusConflict, "admin_project_edit.html", AdminProjectEditPageData{Error: "slug 已经存在，请换一个", Project: p})
+	case errors.Is(err, projects.ErrDuplicate):
+		s.render(w, http.StatusConflict, "admin_project_edit.html", AdminProjectEditPageData{IsNew: true, FormAction: "/admin/projects", Error: "slug 已经存在，请换一个", Project: p})
+		if p.ArchivePath != "" {
+			err := os.Remove(filepath.Join(s.cfg.UploadsDir, p.ArchivePath))
+			if err != nil {
+				log.Printf("The %s remove failed,detail: %s", p.ArchivePath, err)
+			}
+		}
 		return
 	case err != nil:
 		s.render(w, http.StatusInternalServerError, "error.html", ErrorPageData{Status: http.StatusInternalServerError, Message: "The Internal Server Error"})
+		if p.ArchivePath != "" {
+			err := os.Remove(filepath.Join(s.cfg.UploadsDir, p.ArchivePath))
+			if err != nil {
+				log.Printf("The %s remove failed,detail: %s", p.ArchivePath, err)
+			}
+		}
 		return
 	}
 
@@ -299,5 +375,181 @@ func (s *Server) handlerCreateProject(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handlerEditProjectPage(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		s.render(w, http.StatusBadRequest, "error.html", ErrorPageData{Status: http.StatusBadRequest, Message: "The URL is illegal"})
+		return
+	}
+
+	p, err := s.projects.GetById(id)
+	switch {
+	case errors.Is(err, projects.ErrNotFound):
+		s.render(w, http.StatusNotFound, "error.html", ErrorPageData{Status: http.StatusNotFound, Message: "The projects isn't found"})
+		return
+	case err != nil:
+		s.render(w, http.StatusInternalServerError, "error.html", ErrorPageData{Status: http.StatusInternalServerError, Message: "The Internal Server Error"})
+		return
+	}
+	s.render(w, http.StatusOK, "admin_project_edit.html", AdminProjectEditPageData{IsNew: false, FormAction: fmt.Sprintf("/admin/projects/%d", id), Project: p})
+
+}
+
+func (s *Server) handlerUpdateProject(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		s.render(w, http.StatusBadRequest, "error.html", ErrorPageData{Status: http.StatusBadRequest, Message: "The quest a bad"})
+		return
+	}
+
+	r.Body = http.MaxBytesReader(w, r.Body, s.cfg.MaxUploadBytes)
+	err = r.ParseMultipartForm(s.cfg.UploadMemoryBytes)
+	var maxErr *http.MaxBytesError
+	switch {
+	case errors.As(err, &maxErr):
+		s.render(w, http.StatusRequestEntityTooLarge, "error.html", ErrorPageData{Status: http.StatusRequestEntityTooLarge, Message: "The body too large"})
+		return
+	case err != nil:
+		s.render(w, http.StatusBadRequest, "error.html", ErrorPageData{Status: http.StatusBadRequest, Message: "The request is bad"})
+		return
+	}
+
+	old, err := s.projects.GetById(id)
+	switch {
+	case errors.Is(err, projects.ErrNotFound):
+		s.render(w, http.StatusNotFound, "error.html", ErrorPageData{Status: http.StatusNotFound, Message: "The projects isn't found"})
+		return
+	case err != nil:
+		s.render(w, http.StatusInternalServerError, "error.html", ErrorPageData{Status: http.StatusInternalServerError, Message: "The Internal Server Error"})
+		return
+	}
+
+	p, err := parseProjectForm(r)
+	if err != nil {
+		s.render(w, http.StatusBadRequest, "admin_project_edit.html", AdminProjectEditPageData{IsNew: false, FormAction: fmt.Sprintf("/admin/projects/%d", id), Error: err.Error(), Project: p})
+		return
+	}
+
+	p.ID = id
+	p.ArchivePath = old.ArchivePath
+	saved := ""
+	f, _, err := r.FormFile("archive")
+	switch {
+	case errors.Is(err, http.ErrMissingFile):
+
+	case err != nil:
+		s.render(w, http.StatusBadRequest, "admin_project_edit.html", AdminProjectEditPageData{IsNew: false, FormAction: fmt.Sprintf("/admin/projects/%d", id), Project: p})
+		return
+	default:
+		defer f.Close()
+		head := make([]byte, 4)
+		_, err = io.ReadFull(f, head)
+		if err != nil {
+			s.render(w, http.StatusBadRequest, "admin_project_edit.html", AdminProjectEditPageData{IsNew: false, FormAction: fmt.Sprintf("/admin/projects/%d", id), Project: p})
+			return
+		}
+		if !bytes.Equal(head, []byte{'P', 'K', 3, 4}) {
+			s.render(w, http.StatusBadRequest, "admin_project_edit.html", AdminProjectEditPageData{IsNew: false, FormAction: fmt.Sprintf("/admin/projects/%d", id), Project: p})
+			return
+		}
+
+		buf := make([]byte, 16)
+		_, err = io.ReadFull(rand.Reader, buf)
+		if err != nil {
+			s.render(w, http.StatusBadRequest, "admin_project_edit.html", AdminProjectEditPageData{IsNew: false, FormAction: fmt.Sprintf("/admin/projects/%d", id), Project: p})
+			return
+		}
+
+		name := hex.EncodeToString(buf) + ".zip"
+
+		dest, err := os.Create(filepath.Join(s.cfg.UploadsDir, name))
+		if err != nil {
+			s.render(w, http.StatusInternalServerError, "error.html", ErrorPageData{Status: http.StatusInternalServerError, Message: "The Internal Server Error"})
+			return
+		}
+		defer dest.Close()
+
+		_, err = f.Seek(0, io.SeekStart)
+		if err != nil {
+			s.render(w, http.StatusInternalServerError, "error.html", ErrorPageData{Status: http.StatusInternalServerError, Message: "The Internal Server Error"})
+			err := os.Remove(filepath.Join(s.cfg.UploadsDir, name))
+			if err != nil {
+				log.Printf("The %s remove failed,detail: %s", name, err)
+			}
+			return
+		}
+
+		_, err = io.Copy(dest, f)
+		if err != nil {
+			s.render(w, http.StatusInternalServerError, "error.html", ErrorPageData{Status: http.StatusInternalServerError, Message: "The Internal Server Error"})
+			err := os.Remove(filepath.Join(s.cfg.UploadsDir, name))
+			if err != nil {
+				log.Printf("The %s remove failed,detail: %s", name, err)
+			}
+			return
+		}
+		saved = name
+		p.ArchivePath = name
+	}
+
+	err = s.projects.Update(p)
+	switch {
+	case errors.Is(err, projects.ErrDuplicate):
+		s.render(w, http.StatusConflict, "admin_project_edit.html", AdminProjectEditPageData{IsNew: false, FormAction: fmt.Sprintf("/admin/projects/%d", id), Error: "slug冲突，请换一个slug", Project: p})
+		if saved != "" {
+			err := os.Remove(filepath.Join(s.cfg.UploadsDir, p.ArchivePath))
+			if err != nil {
+				log.Printf("The %s remove failed,detail: %s", p.ArchivePath, err)
+			}
+		}
+		return
+	case errors.Is(err, projects.ErrNotFound):
+		s.render(w, http.StatusNotFound, "error.html", ErrorPageData{Status: http.StatusNotFound, Message: "The projects isn't found"})
+		if saved != "" {
+			err := os.Remove(filepath.Join(s.cfg.UploadsDir, p.ArchivePath))
+			if err != nil {
+				log.Printf("The %s remove failed,detail: %s", p.ArchivePath, err)
+			}
+		}
+		return
+	case err != nil:
+		s.render(w, http.StatusInternalServerError, "error.html", ErrorPageData{Status: http.StatusInternalServerError, Message: "The quest is bad"})
+		if saved != "" {
+			err := os.Remove(filepath.Join(s.cfg.UploadsDir, p.ArchivePath))
+			if err != nil {
+				log.Printf("The %s remove failed,detail: %s", p.ArchivePath, err)
+			}
+		}
+		return
+	}
+
+	if saved != "" && old.ArchivePath != "" {
+		err := os.Remove(filepath.Join(s.cfg.UploadsDir, old.ArchivePath))
+		if err != nil {
+			log.Printf("The %s remove failed,detail: %s", old.ArchivePath, err)
+		}
+	}
+
+	http.Redirect(w, r, "/admin/projects", http.StatusSeeOther)
+
+}
+
+func (s *Server) handlerDeleteProject(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		s.render(w, http.StatusBadRequest, "error.html", ErrorPageData{Status: http.StatusBadRequest, Message: "The resquest is bad"})
+		return
+	}
+
+	err = s.projects.Delete(id)
+	switch {
+	case errors.Is(err, projects.ErrNotFound):
+		s.render(w, http.StatusNotFound, "error.html", ErrorPageData{Status: http.StatusNotFound, Message: "The project isn't found"})
+		return
+	case err != nil:
+		s.render(w, http.StatusInternalServerError, "error.html", ErrorPageData{Status: http.StatusInternalServerError, Message: "The Internal Server Error"})
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 
 }

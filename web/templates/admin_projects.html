@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>项目后台 · LonelyHorse</title>
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/app.js"></script>
+  <script src="/static/admin.js" defer></script>
+</head>
+<body>
+  {{template "admin-nav" .}}
+
+  <main class="container">
+    <p class="back-row">
+      <a class="navlink" href="/admin">← 返回后台首页</a>
+      <a class="btn btn-ghost btn-sm" href="/admin/projects/new">＋ 新建项目</a>
+    </p>
+
+    <header class="page-head">
+      <h1>项目后台</h1>
+      <p class="muted">共 {{len .List}} 个</p>
+    </header>
+
+    {{if .List}}
+    <div class="table-wrap panel">
+      <table>
+        <thead>
+          <tr>
+            <th>标题</th>
+            <th>Slug</th>
+            <th>状态</th>
+            <th>置顶</th>
+            <th>排序</th>
+            <th>更新时间</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{range .List}}
+          <tr{{if eq .Status "archived"}} class="is-archived"{{end}}>
+            <td>{{.Title}}</td>
+            <td class="muted">{{.Slug}}</td>
+            <td>{{if eq .Status "active"}}active{{else}}archived{{end}}</td>
+            <td>{{if .Featured}}★{{else}}—{{end}}</td>
+            <td class="muted">{{.SortOrder}}</td>
+            <td class="muted">{{.UpdatedAt.Local.Format "2006-01-02 15:04"}}</td>
+            <td>
+              <a class="btn btn-ghost btn-sm" href="/admin/projects/{{.ID}}/edit">编辑</a>
+              <button class="btn btn-danger btn-sm js-delete" type="button" data-url="/admin/projects/{{.ID}}">删除</button>
+            </td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+    {{else}}
+    <p class="muted">还没有项目。</p>
+    {{end}}
+  </main>
+
+  {{template "site-footer" .}}
+</body>
+</html>

@@ -30,11 +30,17 @@ func (s *Server) routes() *http.ServeMux {
 	mux.Handle("GET /admin/posts/{id}/edit", s.requireAuthPage(http.HandlerFunc(s.handlerEditPostPage)))
 	mux.Handle("POST /admin/posts/{id}", s.requireAuthPage(http.HandlerFunc(s.handlerUpdatePost)))
 	mux.Handle("DELETE /admin/posts/{id}", s.requireAuthAPI(http.HandlerFunc(s.handlerDeletePost)))
+	mux.Handle("GET /admin/projects", s.requireAuthPage(http.HandlerFunc(s.handlerAdminShowProject)))
+	mux.Handle("GET /admin/projects/new", s.requireAuthPage(http.HandlerFunc(s.handlerNewProjectPage)))
+	mux.Handle("POST /admin/projects", s.requireAuthPage(http.HandlerFunc(s.handlerCreateProject)))
+	mux.Handle("GET /admin/projects/{id}/edit", s.requireAuthPage(http.HandlerFunc(s.handlerEditProjectPage)))
+	mux.Handle("POST /admin/projects/{id}", s.requireAuthPage(http.HandlerFunc(s.handlerUpdateProject)))
+	mux.Handle("DELETE /admin/projects/{id}", s.requireAuthAPI(http.HandlerFunc(s.handlerDeleteProject)))
 
+	mux.HandleFunc("GET /projects", s.handlerProjectsPage)
 	mux.HandleFunc("GET /about", s.handlerAboutPage)
 	mux.Handle("POST /about/edit", s.requireAuthPage(http.HandlerFunc(s.handlerAboutSavePage)))
 	mux.Handle("GET /about/edit", s.requireAuthPage(http.HandlerFunc(s.handlerAboutEditPage)))
-
 	mux.HandleFunc("GET /posts", s.handlerIndex)
 	mux.HandleFunc("GET /post/{slug}", s.handlerPost)
 

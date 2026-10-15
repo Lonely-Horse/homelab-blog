@@ -38,6 +38,11 @@ type Config struct {
 
 	//博客文章版本
 	ParserVersion int
+
+	//项目文件配置
+	MaxUploadBytes    int64
+	UploadMemoryBytes int64
+	UploadsDir        string
 }
 
 func Load() (Config, error) {
@@ -72,6 +77,11 @@ func Load() (Config, error) {
 
 		//博客文章版本
 		ParserVersion: 1,
+
+		//项目文件配置
+		MaxUploadBytes:    2 << 20,
+		UploadMemoryBytes: 1 << 20,
+		UploadsDir:        "./data/uploads",
 	}
 
 	valueStr, ok := os.LookupEnv("SESSION_COOKIE_SECURE")

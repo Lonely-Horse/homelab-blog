@@ -37,8 +37,8 @@ func (s *Store) Create(p *Project) (int64, error) {
 	p.UpdatedAt = now
 	p.CreatedAt = now
 
-	query2 := "INSERT INTO projects(slug,title,summary,github_url,demo_url,tech_stack,cover_image,status,featured,sort_order,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"
-	res, err := tx.Exec(query2, p.Slug, p.Title, p.Summary, p.GithubURL, p.DemoURL, p.TechStack, p.CoverImage, p.Status, p.Featured, p.SortOrder, p.CreatedAt, p.UpdatedAt)
+	query2 := "INSERT INTO projects(slug,title,summary,github_url,demo_url,archive_path,tech_stack,cover_image,status,featured,sort_order,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)"
+	res, err := tx.Exec(query2, p.Slug, p.Title, p.Summary, p.GithubURL, p.DemoURL, p.ArchivePath, p.TechStack, p.CoverImage, p.Status, p.Featured, p.SortOrder, p.CreatedAt, p.UpdatedAt)
 	if err != nil {
 		return 0, err
 	}
@@ -77,8 +77,8 @@ func (s *Store) Update(p *Project) error {
 
 	now := db.NowUTC()
 	p.UpdatedAt = now
-	query2 := "UPDATE projects SET slug = ?,title = ?,summary = ?,github_url = ?,demo_url = ?,tech_stack = ?,cover_image = ?,status = ?,featured = ?,sort_order = ?,updated_at = ? WHERE id =?"
-	res, err := tx.Exec(query2, p.Slug, p.Title, p.Summary, p.GithubURL, p.DemoURL, p.TechStack, p.CoverImage, p.Status, p.Featured, p.SortOrder, p.UpdatedAt, p.ID)
+	query2 := "UPDATE projects SET slug = ?,title = ?,summary = ?,github_url = ?,demo_url = ?,archive_path = ?,tech_stack = ?,cover_image = ?,status = ?,featured = ?,sort_order = ?,updated_at = ? WHERE id =?"
+	res, err := tx.Exec(query2, p.Slug, p.Title, p.Summary, p.GithubURL, p.DemoURL, p.ArchivePath, p.TechStack, p.CoverImage, p.Status, p.Featured, p.SortOrder, p.UpdatedAt, p.ID)
 	if err != nil {
 		return err
 	}
@@ -117,12 +117,12 @@ func (s *Store) Delete(id int64) error {
 	return nil
 }
 
-const selectProjectsCols = `id,slug,title,summary,github_url,demo_url,tech_stack,cover_image,status,featured,sort_order,created_at,updated_at`
+const selectProjectsCols = `id,slug,title,summary,github_url,demo_url,archive_path,tech_stack,cover_image,status,featured,sort_order,created_at,updated_at`
 
 func (s *Store) GetById(id int64) (*Project, error) {
 	p := &Project{}
 	query := "SELECT " + selectProjectsCols + " FROM projects WHERE id = ?"
-	err := s.db.QueryRow(query, id).Scan(&p.ID, &p.Slug, &p.Title, &p.Summary, &p.GithubURL, &p.DemoURL, &p.TechStack, &p.CoverImage, &p.Status, &p.Featured, &p.SortOrder, &p.CreatedAt, &p.UpdatedAt)
+	err := s.db.QueryRow(query, id).Scan(&p.ID, &p.Slug, &p.Title, &p.Summary, &p.GithubURL, &p.DemoURL, &p.ArchivePath, &p.TechStack, &p.CoverImage, &p.Status, &p.Featured, &p.SortOrder, &p.CreatedAt, &p.UpdatedAt)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
 		return nil, ErrNotFound
@@ -144,7 +144,7 @@ func (s *Store) ListAll() ([]*Project, error) {
 	projects := []*Project{}
 	for rows.Next() {
 		p := &Project{}
-		err = rows.Scan(&p.ID, &p.Slug, &p.Title, &p.Summary, &p.GithubURL, &p.DemoURL, &p.TechStack, &p.CoverImage, &p.Status, &p.Featured, &p.SortOrder, &p.CreatedAt, &p.UpdatedAt)
+		err = rows.Scan(&p.ID, &p.Slug, &p.Title, &p.Summary, &p.GithubURL, &p.DemoURL, &p.ArchivePath, &p.TechStack, &p.CoverImage, &p.Status, &p.Featured, &p.SortOrder, &p.CreatedAt, &p.UpdatedAt)
 		if err != nil {
 			return nil, err
 		}
@@ -170,7 +170,7 @@ func (s *Store) ListPublished() ([]*Project, error) {
 	projects := []*Project{}
 	for rows.Next() {
 		p := &Project{}
-		err = rows.Scan(&p.ID, &p.Slug, &p.Title, &p.Summary, &p.GithubURL, &p.DemoURL, &p.TechStack, &p.CoverImage, &p.Status, &p.Featured, &p.SortOrder, &p.CreatedAt, &p.UpdatedAt)
+		err = rows.Scan(&p.ID, &p.Slug, &p.Title, &p.Summary, &p.GithubURL, &p.DemoURL, &p.ArchivePath, &p.TechStack, &p.CoverImage, &p.Status, &p.Featured, &p.SortOrder, &p.CreatedAt, &p.UpdatedAt)
 		if err != nil {
 			return nil, err
 		}

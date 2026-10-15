@@ -9,6 +9,7 @@ import (
 	"homelab-blog/internal/projects"
 	"homelab-blog/internal/server"
 	"log"
+	"os"
 )
 
 func Run() error {
@@ -17,6 +18,11 @@ func Run() error {
 		return err
 	}
 	log.Printf("https is %v now", cfg.SessionCookieSecure)
+
+	err = os.MkdirAll(cfg.UploadsDir, 0o755)
+	if err != nil {
+		return err
+	}
 
 	database, err := db.Open(cfg)
 	if err != nil {

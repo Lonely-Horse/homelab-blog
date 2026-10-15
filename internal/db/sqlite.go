@@ -13,7 +13,7 @@ import (
 	_ "github.com/glebarez/go-sqlite"
 )
 
-const schemaVersion = 1
+const schemaVersion = 2
 
 //go:embed schema.sql
 var schemaSQL string
@@ -108,6 +108,45 @@ func migrate(db *sql.DB) error {
 
 	if !hasCol {
 		_, err := tx.Exec("ALTER TABLE posts ADD COLUMN render_version INTEGER NOT NULL DEFAULT 0")
+		if err != nil {
+			return err
+		}
+	}
+
+	rows2, err := tx.Query("PRAGMA table_info(projects)")
+	if err != nil {
+		return err
+	}
+	defer rows2.Close()
+
+	hasArchive := false
+
+	for rows2.Next() {
+		var (
+			cid     int
+			name    string
+			typ     string
+			notNull int
+			dflt    sql.NullString
+			pk      int
+		)
+
+		err := rows2.Scan(&cid, &name, &typ, &notNull, &dflt, &pk)
+		if err != nil {
+			return err
+		}
+		if name == "archive_path" {
+			hasArchive = true
+		}
+	}
+
+	err = rows2.Err()
+	if err != nil {
+		return err
+	}
+
+	if !hasArchive {
+		_, err := tx.Exec("ALTER TABLE projects ADD COLUMN archive_path TEXT NOT NULL DEFAULT ''")
 		if err != nil {
 			return err
 		}

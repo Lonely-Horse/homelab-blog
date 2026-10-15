@@ -12,12 +12,13 @@
     var buttons = document.querySelectorAll(".js-delete");
     Array.prototype.forEach.call(buttons, function (btn) {
       btn.addEventListener("click", function () {
-        var id = btn.dataset.id;
+        var url = btn.dataset.url;
+        if (!url) return;
         if (!window.confirm("确定删除这条记录？")) return;
 
         btn.disabled = true;
 
-        fetch("/admin/posts/" + encodeURIComponent(id), { method: "DELETE" })
+        fetch(url, { method: "DELETE" })
           .then(function (res) {
             switch (res.status) {
               case 204: // 删除成功

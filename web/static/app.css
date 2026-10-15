@@ -523,7 +523,7 @@ td .btn + .btn { margin-left: 8px; }
 
 /* ---------- 表单 ---------- */
 label { display: block; margin-bottom: 6px; font-weight: 500; font-size: 0.94rem; }
-input[type="text"], input[type="password"], input[type="search"], textarea {
+input[type="text"], input[type="password"], input[type="search"], input[type="url"], input[type="number"], select, textarea {
   width: 100%;
   padding: 9px 12px;
   font: inherit;
@@ -540,6 +540,9 @@ input:focus, textarea:focus {
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 textarea { resize: vertical; min-height: 120px; font-family: var(--font-mono); font-size: 0.9rem; }
+select { cursor: pointer; }
+.checkbox-row label { display: inline-flex; align-items: center; gap: 8px; font-weight: 400; }
+.checkbox-row input[type="checkbox"] { width: auto; }
 form p { margin: 0 0 16px; }
 
 /* ---------- 提示条 ---------- */
@@ -705,3 +708,60 @@ html[data-theme="light"] .auth-card {
   }
   .back-fab-text { display: none; }
 }
+
+/* ---------- 项目卡片：长卡片 + 标签 + 归档态（§12.4） ---------- */
+.project-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+.project-card {
+  position: relative;
+  padding: 20px 22px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-1);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+.project-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-3);
+}
+.project-card-title { margin: 0; font-size: 1.15rem; color: var(--fg); }
+.project-card-summary { margin: 8px 0 0; color: var(--fg-muted); font-size: 0.95rem; }
+.project-star { color: var(--accent); }
+.project-tags {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 12px 0 0;
+  padding: 0;
+}
+.project-tag {
+  padding: 2px 9px;
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  color: var(--fg-muted);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+}
+.project-links { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 0; }
+.project-badge {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  padding: 2px 9px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--fg-faint);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+}
+.project-card.is-archived { opacity: 0.55; }
+tr.is-archived { opacity: 0.55; }
+.back-row .btn { margin-left: 10px; }
