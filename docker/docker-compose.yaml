@@ -1,0 +1,11 @@
+services:
+  homelab-blog:
+    image: 100.87.250.21:5000/homelab-blog:latest
+    container_name: homelab-blog
+    ports:
+      - "100.94.116.106:5200:5200"
+    volumes:
+      - ../data:/app/data
+    environment:
+      - SESSION_COOKIE_SECURE=${SESSION_COOKIE_SECURE}
+    restart: unless-stopped

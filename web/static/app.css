@@ -541,6 +541,21 @@ input:focus, textarea:focus {
 }
 textarea { resize: vertical; min-height: 120px; font-family: var(--font-mono); font-size: 0.9rem; }
 select { cursor: pointer; }
+input[type="file"] { width: 100%; font: inherit; font-size: 0.9rem; color: var(--fg-muted); }
+input[type="file"]::file-selector-button {
+  margin-right: 12px;
+  padding: 7px 14px;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+input[type="file"]::file-selector-button:hover { border-color: var(--accent); }
+.field-hint { display: block; margin-top: 6px; font-size: 0.86rem; }
 .checkbox-row label { display: inline-flex; align-items: center; gap: 8px; font-weight: 400; }
 .checkbox-row input[type="checkbox"] { width: auto; }
 form p { margin: 0 0 16px; }

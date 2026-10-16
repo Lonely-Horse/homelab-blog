@@ -48,7 +48,7 @@ type Config struct {
 func Load() (Config, error) {
 	cfg := Config{
 		//server
-		ListenAddr:        "127.0.0.1:5200",
+		ListenAddr:        "0.0.0.0:5200",
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       30 * time.Second,
 		WriteTimeout:      30 * time.Second,

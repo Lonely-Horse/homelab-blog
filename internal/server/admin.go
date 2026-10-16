@@ -245,7 +245,7 @@ func parseProjectForm(r *http.Request) (*projects.Project, error) {
 		return p, errors.New("The title too long")
 	case summary == "":
 		return p, errors.New("The summary is empty")
-	case !strings.HasPrefix(githubURL, "https://github.com/"):
+	case githubURL != "" && !strings.HasPrefix(githubURL, "https://github.com/"):
 		return p, errors.New("The github url is bad")
 	case demoURL != "" && !strings.HasPrefix(demoURL, "https://"):
 		return p, errors.New("The URL is illegal")
@@ -437,25 +437,25 @@ func (s *Server) handlerUpdateProject(w http.ResponseWriter, r *http.Request) {
 	case errors.Is(err, http.ErrMissingFile):
 
 	case err != nil:
-		s.render(w, http.StatusBadRequest, "admin_project_edit.html", AdminProjectEditPageData{IsNew: false, FormAction: fmt.Sprintf("/admin/projects/%d", id), Project: p})
+		s.render(w, http.StatusBadRequest, "admin_project_edit.html", AdminProjectEditPageData{IsNew: false, FormAction: fmt.Sprintf("/admin/projects/%d", id), Project: p, Error: "The request is bad"})
 		return
 	default:
 		defer f.Close()
 		head := make([]byte, 4)
 		_, err = io.ReadFull(f, head)
 		if err != nil {
-			s.render(w, http.StatusBadRequest, "admin_project_edit.html", AdminProjectEditPageData{IsNew: false, FormAction: fmt.Sprintf("/admin/projects/%d", id), Project: p})
+			s.render(w, http.StatusBadRequest, "admin_project_edit.html", AdminProjectEditPageData{IsNew: false, FormAction: fmt.Sprintf("/admin/projects/%d", id), Project: p, Error: "The request is bad"})
 			return
 		}
 		if !bytes.Equal(head, []byte{'P', 'K', 3, 4}) {
-			s.render(w, http.StatusBadRequest, "admin_project_edit.html", AdminProjectEditPageData{IsNew: false, FormAction: fmt.Sprintf("/admin/projects/%d", id), Project: p})
+			s.render(w, http.StatusBadRequest, "admin_project_edit.html", AdminProjectEditPageData{IsNew: false, FormAction: fmt.Sprintf("/admin/projects/%d", id), Project: p, Error: "The request is bad"})
 			return
 		}
 
 		buf := make([]byte, 16)
 		_, err = io.ReadFull(rand.Reader, buf)
 		if err != nil {
-			s.render(w, http.StatusBadRequest, "admin_project_edit.html", AdminProjectEditPageData{IsNew: false, FormAction: fmt.Sprintf("/admin/projects/%d", id), Project: p})
+			s.render(w, http.StatusBadRequest, "admin_project_edit.html", AdminProjectEditPageData{IsNew: false, FormAction: fmt.Sprintf("/admin/projects/%d", id), Project: p, Error: "The request is bad"})
 			return
 		}
 
@@ -512,7 +512,7 @@ func (s *Server) handlerUpdateProject(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	case err != nil:
-		s.render(w, http.StatusInternalServerError, "error.html", ErrorPageData{Status: http.StatusInternalServerError, Message: "The quest is bad"})
+		s.render(w, http.StatusInternalServerError, "error.html", ErrorPageData{Status: http.StatusInternalServerError, Message: "The request is bad"})
 		if saved != "" {
 			err := os.Remove(filepath.Join(s.cfg.UploadsDir, p.ArchivePath))
 			if err != nil {
@@ -536,7 +536,17 @@ func (s *Server) handlerUpdateProject(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handlerDeleteProject(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
 	if err != nil {
-		s.render(w, http.StatusBadRequest, "error.html", ErrorPageData{Status: http.StatusBadRequest, Message: "The resquest is bad"})
+		s.render(w, http.StatusBadRequest, "error.html", ErrorPageData{Status: http.StatusBadRequest, Message: "The request is bad"})
+		return
+	}
+
+	p, err := s.projects.GetById(id)
+	switch {
+	case errors.Is(err, projects.ErrNotFound):
+		s.render(w, http.StatusNotFound, "error.html", ErrorPageData{Status: http.StatusNotFound, Message: "The project isn't found"})
+		return
+	case err != nil:
+		s.render(w, http.StatusInternalServerError, "error.html", ErrorPageData{Status: http.StatusInternalServerError, Message: "The Internal Server Error"})
 		return
 	}
 
@@ -550,6 +560,39 @@ func (s *Server) handlerDeleteProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if p.ArchivePath != "" {
+		err := os.Remove(filepath.Join(s.cfg.UploadsDir, p.ArchivePath))
+		if err != nil {
+			log.Printf("The %s remove failed,detail: %s", p.ArchivePath, err)
+		}
+	}
+
 	w.WriteHeader(http.StatusNoContent)
 
+}
+
+func (s *Server) handlerDownloadProject(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		s.render(w, http.StatusBadRequest, "error.html", ErrorPageData{Status: http.StatusBadRequest, Message: "The request is bad"})
+		return
+	}
+
+	p, err := s.projects.GetById(id)
+	switch {
+	case errors.Is(err, projects.ErrNotFound):
+		s.render(w, http.StatusNotFound, "error.html", ErrorPageData{Status: http.StatusNotFound, Message: "The project not found"})
+		return
+	case err != nil:
+		s.render(w, http.StatusInternalServerError, "error.html", ErrorPageData{Status: http.StatusInternalServerError, Message: "The internal server error"})
+		return
+	}
+
+	if p.ArchivePath == "" {
+		s.render(w, http.StatusNotFound, "error.html", ErrorPageData{Status: http.StatusNotFound, Message: "The project not found"})
+		return
+	}
+
+	w.Header().Set("Content-Disposition", `attachment;filename="`+p.Slug+`.zip"`)
+	http.ServeFile(w, r, filepath.Join(s.cfg.UploadsDir, p.ArchivePath))
 }

@@ -19,7 +19,7 @@
 
     {{if .Error}}<p class="notice" role="alert">{{.Error}}</p>{{end}}
 
-    <form class="panel panel-pad" method="post" action="{{.FormAction}}">
+    <form class="panel panel-pad" method="post" action="{{.FormAction}}" enctype="multipart/form-data">
       <p>
         <label for="title">标题</label>
         <input id="title" name="title" type="text" value="{{.Project.Title}}" required>
@@ -33,12 +33,23 @@
         <textarea id="summary" name="summary" rows="3">{{.Project.Summary}}</textarea>
       </p>
       <p>
-        <label for="github_url">GitHub 链接（须以 https://github.com/ 开头）</label>
+        <label for="github_url">GitHub 链接（可留空；填了须以 https://github.com/ 开头）</label>
         <input id="github_url" name="github_url" type="text" value="{{.Project.GithubURL}}">
       </p>
       <p>
         <label for="demo_url">Demo 链接（可留空）</label>
         <input id="demo_url" name="demo_url" type="text" value="{{.Project.DemoURL}}">
+      </p>
+      <p>
+        <label for="archive">项目压缩包（.zip 格式，最大 2MB）</label>
+        <input id="archive" name="archive" type="file" accept=".zip,application/zip">
+        {{if .IsNew}}
+          <span class="muted field-hint">可选。不上传则该项目暂时没有下载包。</span>
+        {{else if .Project.ArchivePath}}
+          <span class="muted field-hint">当前：{{.Project.ArchivePath}} · 不选新文件则保留原包</span>
+        {{else}}
+          <span class="muted field-hint">当前没有压缩包，选择一个 .zip 即可添加。</span>
+        {{end}}
       </p>
       <p>
         <label for="tech_stack">技术栈（逗号分隔，如 Go,Docker,SQLite）</label>

@@ -32,6 +32,7 @@
           <p class="project-links">
             {{if .GithubURL}}<a class="btn btn-ghost btn-sm" href="{{.GithubURL}}" target="_blank" rel="noopener noreferrer">Source ↗</a>{{end}}
             {{if .DemoURL}}<a class="btn btn-ghost btn-sm" href="{{.DemoURL}}" target="_blank" rel="noopener noreferrer">Demo ↗</a>{{end}}
+            {{if .ArchivePath}}<a class="btn btn-ghost btn-sm" href="/projects/{{.ID}}/download">Download ↓</a>{{end}}
           </p>
         </article>
       </li>
