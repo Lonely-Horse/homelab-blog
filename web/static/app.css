@@ -142,7 +142,17 @@ main.container {
   letter-spacing: 0.04em;
   color: var(--fg-faint);
 }
-.site-footer .brand-mark { color: var(--fg-muted); }
+.site-footer .brand-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--fg-muted);
+}
+.brand-mark-logo {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
 
 .page-head { margin-bottom: 30px; padding-bottom: 18px; border-bottom: 1px solid var(--border); }
 .page-head h1 { margin: 0 0 8px; font-size: clamp(1.7rem, 4.4vw, 2.3rem); }
@@ -179,10 +189,18 @@ main.container {
   padding-bottom: 13px;
 }
 .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-weight: 600;
   color: var(--fg);
   margin-right: 18px;
   text-decoration: none;
+}
+.brand-logo {
+  width: 26px;
+  height: 26px;
+  flex: 0 0 auto;
 }
 .brand:hover { color: var(--accent); text-decoration: none; }
 
@@ -652,6 +670,13 @@ html[data-theme="light"] .auth-card {
 .curtain.is-open { transform: translate3d(0, -100%, 0); }
 
 .curtain-inner { text-align: center; padding: 24px; }
+.curtain-logo {
+  display: block;
+  width: clamp(96px, 15vw, 148px);
+  height: auto;
+  margin: 0 auto 24px;
+  filter: drop-shadow(0 0 26px var(--glow));
+}
 .curtain-title {
   margin: 0;
   font-size: clamp(2rem, 7vw, 3.4rem);
