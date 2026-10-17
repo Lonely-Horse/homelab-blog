@@ -20,7 +20,7 @@ func (s *Server) handlerAboutPage(w http.ResponseWriter, r *http.Request) {
 	// 只有已登录才在 /about 暴露管理入口（红线：入口不得泄露给匿名用户）
 	isAdmin := s.checkAuth(r) != nil
 
-	s.render(w, http.StatusOK, "about.html", AboutPageData{Posts: profile.Posts, ContentHTML: template.HTML(content_html), UpdatedAt: profile.UpdatedAt, IsAdmin: isAdmin})
+	s.render(w, http.StatusOK, "about.html", AboutPageData{Posts: profile.Posts, Projects: profile.Projects, ContentHTML: template.HTML(content_html), UpdatedAt: profile.UpdatedAt, IsAdmin: isAdmin})
 
 }
 

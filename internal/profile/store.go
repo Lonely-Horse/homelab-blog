@@ -30,6 +30,12 @@ func (s *Store) Get() (*Profile, error) {
 		return nil, err
 	}
 
+	query3 := "SELECT COUNT(*) FROM projects"
+	err = s.db.QueryRow(query3).Scan(&profile.Projects)
+	if err != nil {
+		return nil, err
+	}
+
 	return &profile, nil
 }
 

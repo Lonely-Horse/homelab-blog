@@ -28,6 +28,7 @@ type ErrorPageData struct {
 
 type AboutPageData struct {
 	Posts       int
+	Projects    int
 	ContentHTML template.HTML
 	UpdatedAt   time.Time
 	IsAdmin     bool
