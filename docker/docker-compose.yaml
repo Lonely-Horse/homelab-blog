@@ -5,7 +5,7 @@ services:
     ports:
       - "100.94.116.106:5200:5200"
     volumes:
-      - ../data:/app/data
+      - ./data:/app/data
     environment:
       - TZ=Asia/Shanghai
       - SESSION_COOKIE_SECURE=${SESSION_COOKIE_SECURE}
