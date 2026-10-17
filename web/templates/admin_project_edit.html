@@ -41,7 +41,7 @@
         <input id="demo_url" name="demo_url" type="text" value="{{.Project.DemoURL}}">
       </p>
       <p>
-        <label for="archive">项目压缩包（.zip 格式，最大 2MB）</label>
+        <label for="archive">项目压缩包（.zip 格式，最大 60 MiB）</label>
         <input id="archive" name="archive" type="file" accept=".zip,application/zip">
         {{if .IsNew}}
           <span class="muted field-hint">可选。不上传则该项目暂时没有下载包。</span>

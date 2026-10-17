@@ -17,7 +17,7 @@ FROM alpine:3.24
 ARG UID=1000
 ARG GID=1000
 
-RUN apk add --no-cache ca-certificates && \
+RUN apk add --no-cache ca-certificates tzdata && \
     addgroup -g $GID -S appgroup && \
     adduser -u $UID -S appuser -G appgroup
 

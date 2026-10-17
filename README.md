@@ -102,13 +102,13 @@ go run ./cmd/admin-seed -user admin
 | 分组 | 项 | 默认 |
 | :--- | :--- | :--- |
 | 服务 | `ListenAddr` | `0.0.0.0:5200` |
-| 服务 | `ReadHeaderTimeout` / `ReadTimeout` / `WriteTimeout` / `IdleTimeout` | `5s` / `30s` / `30s` / `120s` |
+| 服务 | `ReadHeaderTimeout` / `ReadTimeout` / `WriteTimeout` / `IdleTimeout` | `5s` / `120s` / `120s` / `120s` |
 | 服务 | `MaxHeaderBytes` | `1 MiB` |
 | 数据 | `DataDir` / `DBPath` | `./data` / `./data/blog.db` |
 | 会话 | `SessionCookieName` / `SessionTTL` / `SessionTokenBytes` | `session` / `7d` / `32` |
 | 限流 | `LoginRatePerMin` / `LoginRateWindow` | `5` 次 / `60s` |
 | 密码 | `PBKDF2Iterations` / `PBKDF2KeyLength` / `SaltLength` | `600000` / `32` / `16` |
-| 上传 | `MaxUploadBytes` / `UploadMemoryBytes` / `UploadsDir` | `2 MiB` / `1 MiB` / `./data/uploads` |
+| 上传 | `MaxUploadBytes` / `UploadMemoryBytes` / `UploadsDir` | `60 MiB` / `5 MiB` / `./data/uploads` |
 
 ## 接口一览
 
@@ -191,7 +191,7 @@ go run ./cmd/admin-seed -user admin
 
 ## 上传与附件
 
-- 请求体上限：`2 MiB`（`http.MaxBytesReader`），超出 → `413`。
+- 请求体上限：`60 MiB`（`http.MaxBytesReader`），超出 → `413`；读请求体的总时长受 `ReadTimeout`（`120s`）约束。
 - 仅接受 **ZIP**：读取前 4 字节做魔数校验，必须是 `50 4B 03 04`（`PK\x03\x04`）。
 - 落盘文件名：16 字节随机数生成，避免用户可控路径。
 - 存储位置：`UploadsDir`（默认 `./data/uploads`），数据库只存文件名。

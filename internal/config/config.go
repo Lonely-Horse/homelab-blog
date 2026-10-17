@@ -50,8 +50,8 @@ func Load() (Config, error) {
 		//server
 		ListenAddr:        "0.0.0.0:5200",
 		ReadHeaderTimeout: 5 * time.Second,
-		ReadTimeout:       30 * time.Second,
-		WriteTimeout:      30 * time.Second,
+		ReadTimeout:       120 * time.Second,
+		WriteTimeout:      120 * time.Second,
 		IdleTimeout:       120 * time.Second,
 		ShutdownTimeout:   10 * time.Second,
 		MaxHeaderBytes:    1 << 20,
@@ -79,8 +79,8 @@ func Load() (Config, error) {
 		ParserVersion: 1,
 
 		//项目文件配置
-		MaxUploadBytes:    2 << 20,
-		UploadMemoryBytes: 1 << 20,
+		MaxUploadBytes:    60 << 20,
+		UploadMemoryBytes: 5 << 20,
 		UploadsDir:        "./data/uploads",
 	}
 
