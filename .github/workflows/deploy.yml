@@ -2,7 +2,7 @@ name: Deploy homelab-blog
 
 on:
   push:
-    tag:
+    tags:
       - 'v*'
 
 jobs:
