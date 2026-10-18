@@ -66,6 +66,7 @@ cd "${build_dir}"
 
 echo "现在开始原地构建镜像,并打好标签"
 docker build \
+  -f docker/Dockerfile \
   -t "${Image_latest}" \
   -t "${Image_version}" \
   .
