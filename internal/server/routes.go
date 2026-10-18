@@ -36,6 +36,7 @@ func (s *Server) routes() *http.ServeMux {
 	mux.Handle("GET /admin/projects/{id}/edit", s.requireAuthPage(http.HandlerFunc(s.handlerEditProjectPage)))
 	mux.Handle("POST /admin/projects/{id}", s.requireAuthPage(http.HandlerFunc(s.handlerUpdateProject)))
 	mux.Handle("DELETE /admin/projects/{id}", s.requireAuthAPI(http.HandlerFunc(s.handlerDeleteProject)))
+	mux.Handle("POST /admin/preview", s.requireAuthAPI(http.HandlerFunc(s.handlerPreview)))
 
 	mux.HandleFunc("GET /projects/{id}/download", s.handlerDownloadProject)
 	mux.HandleFunc("GET /projects", s.handlerProjectsPage)

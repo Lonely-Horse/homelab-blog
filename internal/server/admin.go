@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"homelab-blog/internal/markdown"
@@ -193,6 +194,35 @@ func (s *Server) handlerDeletePost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (s *Server) handlerPreview(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, 512<<10)
+
+	err := r.ParseForm()
+	var maxErr *http.MaxBytesError
+	switch {
+	case errors.As(err, &maxErr):
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(http.StatusRequestEntityTooLarge)
+		w.Write([]byte(`{"error":"content_too_large"}`))
+		return
+	case err != nil:
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{"error":"bad_request"}`))
+		return
+	}
+
+	content_md := r.PostForm.Get("content_md")
+
+	html := markdown.Render(content_md)
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	err = json.NewEncoder(w).Encode(map[string]string{"html": html})
+	if err != nil {
+		log.Printf("preview encode failed: %v", err)
+	}
 }
 
 type AdminProjectPageData struct {
