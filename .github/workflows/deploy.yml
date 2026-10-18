@@ -2,8 +2,7 @@ name: Deploy homelab-blog
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches: [main]
 
 jobs:
   deploy:
@@ -24,6 +23,8 @@ jobs:
 
       - name: Trigger deploy on ser7
         run: |
+          VERSION="v$(TZ=Asia/Shanghai date +%y.%m.%d)"
+          echo "部署版本: ${VERSION}"
           ssh -o StrictHostKeyChecking=no \
             ${{ secrets.SER7_USER }}@${{ secrets.SER7_TS_IP }} \
-            "cd /home/lonelyhorse/go_learn/homelab-blog && bash ./homelab_blog_push_deploy.sh '${{ github.ref_name }}'"
+            "cd /home/lonelyhorse/go_learn/homelab-blog && bash ./homelab_blog_push_deploy.sh '${VERSION}' '${{ github.sha }}'"

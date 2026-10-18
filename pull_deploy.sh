@@ -11,4 +11,7 @@ docker compose pull
 echo "正在更新服务..."
 docker compose up -d
 
+echo "清理悬空镜像..."
+docker image prune -f
+
 echo "✅ T630 部署完成"
