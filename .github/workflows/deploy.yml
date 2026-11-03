@@ -11,8 +11,8 @@ jobs:
       - name: Connect to the tailscale
         uses: tailscale/github-action@v4
         with:
-          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
-          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }} 
+          authkey: ${{ secrets.HS_AUTHKEY }}
+          login-server: https://headscale.lonelyhorse.top
           tags: tag:ci
           ping: ${{ secrets.SER7_TS_IP }}
 
