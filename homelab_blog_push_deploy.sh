@@ -27,11 +27,11 @@ if [[ ! "$commit" =~ ^[0-9a-f]{7,40}$ ]]; then
     exit 1
 fi
 
-Image_address="100.87.250.21:5000"
+Image_address="100.64.0.4:5000"
 Image_name="homelab-blog"
 Image_latest="${Image_address}/${Image_name}:latest"
 Image_version="${Image_address}/${Image_name}:${version}"
-MP9_HOST="lonelyhorse@100.94.116.106"
+MP9_HOST="lonelyhorse@100.64.0.1"
 MP9_DEPLOY_SCRIPT="${HOME}/server/homelab-blog/pull_deploy.sh"
 mp9_blog_address="${HOME}/server/homelab-blog"
 ssh_key="${HOME}/.ssh/ser7_to_mp9"
