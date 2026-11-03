@@ -12,9 +12,9 @@ jobs:
         uses: tailscale/github-action@v4
         with:
           authkey: ${{ secrets.HS_AUTHKEY }}
-          login-server: https://headscale.lonelyhorse.top
           tags: tag:ci
           ping: ${{ secrets.SER7_TS_IP }}
+          args: --login-server=https://headscale.lonelyhorse.top
 
       - name: Load SSH Key
         uses: webfactory/ssh-agent@v0.9.0
