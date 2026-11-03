@@ -12,26 +12,26 @@ import (
 	"net/http"
 )
 
-type server struct {
-	cfg       config.Config
-	authSvc   *auth.Service
-	postStore *posts.Store
-	profile   *profile.Store
-	projects  *projects.Store
+type S struct {
+	Cfg       config.Config
+	AuthSvc   *auth.Service
+	PostStore *posts.Store
+	Profile   *profile.Store
+	Projects  *projects.Store
 }
 
-func New(server server) (*Server, error) {
+func New(server S) (*Server, error) {
 	tpl, err := template.ParseFS(web.FS, "templates/*.html")
 	if err != nil {
 		return nil, err
 	}
 	return &Server{
-		cfg:      server.cfg,
-		auth:     server.authSvc,
-		posts:    server.postStore,
-		profile:  server.profile,
-		projects: server.projects,
-		limiter:  newLoginLimiter(server.cfg),
+		cfg:      server.Cfg,
+		auth:     server.AuthSvc,
+		posts:    server.PostStore,
+		profile:  server.Profile,
+		projects: server.Projects,
+		limiter:  newLoginLimiter(server.Cfg),
 		tpl:      tpl,
 	}, nil
 }

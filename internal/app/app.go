@@ -35,7 +35,14 @@ func Run() error {
 	postStore := posts.NewStore(cfg, database)
 	profile := profile.NewStore(database)
 	projects := projects.NewStore(database)
-	srv, err := server.New(cfg, authSvc, postStore, profile, projects)
+	s := server.S{
+		Cfg:       cfg,
+		AuthSvc:   authSvc,
+		PostStore: postStore,
+		Profile:   profile,
+		Projects:  projects,
+	}
+	srv, err := server.New(s)
 	if err != nil {
 		log.Printf("The New server: %s", err)
 		return err
