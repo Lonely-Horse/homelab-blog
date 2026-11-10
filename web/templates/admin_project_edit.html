@@ -16,8 +16,11 @@
   <main class="container">
     <p class="back-row"><a class="navlink" href="/admin/projects">← 返回项目后台</a></p>
 
-    <header class="page-head">
-      <h1>{{if .IsNew}}新建项目{{else}}编辑项目{{end}}</h1>
+    <header class="admin-head">
+      <div>
+        <p class="admin-eyebrow">Editor · Project</p>
+        <h1>{{if .IsNew}}新建项目{{else}}编辑项目{{end}}</h1>
+      </div>
     </header>
 
     {{if .Error}}<p class="notice" role="alert">{{.Error}}</p>{{end}}

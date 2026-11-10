@@ -73,6 +73,7 @@
       if (opened) return;
       opened = true;
       curtain.classList.remove("is-dragging");
+      curtain.style.setProperty("--drag", "0");
       curtain.classList.add("is-open");
 
       // 动画结束后进入文章列表；transitionend + 定时器双保险
@@ -104,7 +105,11 @@
     var rafId = null;
     function paint() {
       rafId = null;
+      // 幕布本身上移；同时把 0~1 的进度写进 --drag，
+      // 让 .curtain-inner 的 opacity/transform 跟着做视差淡出（CSS 侧计算）
       curtain.style.transform = "translate3d(0," + dy + "px,0)";
+      var progress = Math.min(1, Math.abs(dy) / (window.innerHeight * 0.5));
+      curtain.style.setProperty("--drag", String(progress));
     }
 
     curtain.addEventListener("pointerdown", function (e) {
@@ -139,12 +144,14 @@
         curtain.classList.remove("is-dragging");
         window.requestAnimationFrame(function () {
           curtain.style.transform = "";
+          curtain.style.setProperty("--drag", "0");
           open();
         });
       } else {
-        // 未过阈值：回弹
+        // 未过阈值：回弹（--drag 归零，内容随过渡淡回）
         curtain.classList.remove("is-dragging");
         curtain.style.transform = "";
+        curtain.style.setProperty("--drag", "0");
       }
     }
 

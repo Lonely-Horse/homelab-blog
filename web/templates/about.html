@@ -14,35 +14,41 @@
   {{template "site-nav" .}}
 
   <main class="container">
-    <header class="page-head">
-      <h1>关于本站</h1>
-      <p class="muted">Go · 云原生 · DevOps</p>
+    <header class="masthead">
+      <div>
+        <h1>关于本站</h1>
+        <p class="masthead-sub">一台 VPS、几个容器，和一份还在生长的记录。</p>
+      </div>
+      <p class="masthead-meta">SELF-HOSTED</p>
     </header>
 
-    <section class="panel article about-intro">
-      <div class="prose">
-        {{if .ContentHTML}}
-        {{.ContentHTML}}
-        {{else}}
-        <p class="muted">站主还没有填写简介。</p>
+    <div class="about-grid">
+      <section class="about-body">
+        <div class="prose">
+          {{if .ContentHTML}}
+          {{.ContentHTML}}
+          {{else}}
+          <p class="muted">站主还没有填写简介。</p>
+          {{end}}
+        </div>
+      </section>
+
+      <aside class="about-side" aria-label="站点概况">
+        <dl class="about-facts">
+          <div class="about-fact">
+            <dt>Posts</dt>
+            <dd>{{.Posts}}<span>篇</span></dd>
+          </div>
+          <div class="about-fact">
+            <dt>Projects</dt>
+            <dd>{{.Projects}}<span>个</span></dd>
+          </div>
+        </dl>
+        {{if not .UpdatedAt.IsZero}}
+        <p class="about-updated">最后更新<br>{{.UpdatedAt.Local.Format "2006-01-02 15:04"}}</p>
         {{end}}
-      </div>
-    </section>
-
-    <ul class="stats">
-      <li class="stat">
-        <span class="stat-num">{{.Posts}}</span>
-        <span class="muted">已发布文章</span>
-      </li>
-      <li class="stat">
-        <span class="stat-num" data-stat="projects">{{.Projects}}</span>
-        <span class="muted">项目</span>
-      </li>
-    </ul>
-
-    {{if not .UpdatedAt.IsZero}}
-    <p class="muted updated-at">最后更新：{{.UpdatedAt.Local.Format "2006-01-02 15:04"}}</p>
-    {{end}}
+      </aside>
+    </div>
   </main>
 
   {{template "site-footer" .}}

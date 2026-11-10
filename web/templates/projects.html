@@ -14,35 +14,43 @@
   {{template "site-nav" .}}
 
   <main class="container">
-    <header class="page-head">
-      <h1>项目</h1>
-      <p class="muted">共 {{len .List}} 个</p>
+    <header class="masthead">
+      <div>
+        <h1>项目</h1>
+        <p class="masthead-sub">在跑的东西、归档的东西，都在这条机架上。</p>
+      </div>
+      <p class="masthead-meta">{{len .List}} 个条目</p>
     </header>
 
     {{if .List}}
     <ul class="project-list">
       {{range .List}}
-      <li>
+      <li class="project-item{{if .Featured}} is-featured{{end}}">
         <article class="project-card{{if eq .Status "archived"}} is-archived{{end}}">
-          {{if eq .Status "archived"}}<span class="project-badge">已归档</span>{{end}}
-          <h2 class="project-card-title">{{if .Featured}}<span class="project-star" title="置顶" aria-label="置顶">★</span> {{end}}{{.Title}}</h2>
+          <div class="project-top">
+            <span class="project-state{{if eq .Status "archived"}} is-off{{end}}">{{if eq .Status "archived"}}已归档{{else}}运行中{{end}}</span>
+            {{if .Featured}}<span class="project-featured">Featured</span>{{end}}
+          </div>
+          <h2 class="project-card-title">{{.Title}}</h2>
           {{if .Summary}}<p class="project-card-summary">{{.Summary}}</p>{{end}}
           {{with .Tags}}
           <ul class="project-tags">
             {{range .}}<li class="project-tag">{{.}}</li>{{end}}
           </ul>
           {{end}}
+          {{if or .GithubURL .DemoURL .ArchivePath}}
           <p class="project-links">
             {{if .GithubURL}}<a class="btn btn-ghost btn-sm" href="{{.GithubURL}}" target="_blank" rel="noopener noreferrer">Source ↗</a>{{end}}
             {{if .DemoURL}}<a class="btn btn-ghost btn-sm" href="{{.DemoURL}}" target="_blank" rel="noopener noreferrer">Demo ↗</a>{{end}}
             {{if .ArchivePath}}<a class="btn btn-ghost btn-sm" href="/projects/{{.ID}}/download">Download ↓</a>{{end}}
           </p>
+          {{end}}
         </article>
       </li>
       {{end}}
     </ul>
     {{else}}
-    <p class="muted">还没有项目。</p>
+    <p class="empty">还没有项目。</p>
     {{end}}
   </main>
 

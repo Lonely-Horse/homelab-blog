@@ -14,41 +14,47 @@
 <body>
   {{template "admin-nav" .}}
 
-  <main class="container">
-    <p class="back-row">
-      <a class="navlink" href="/admin">← 返回后台首页</a>
-      <a class="btn btn-ghost btn-sm" href="/admin/projects/new">＋ 新建项目</a>
-    </p>
+  <main class="container admin-page">
+    <p class="back-row"><a class="navlink" href="/admin">← 返回后台首页</a></p>
 
-    <header class="page-head">
-      <h1>项目后台</h1>
-      <p class="muted">共 {{len .List}} 个</p>
+    <header class="admin-head">
+      <div>
+        <p class="admin-eyebrow">Content · Projects</p>
+        <h1>项目后台</h1>
+      </div>
+      <div class="admin-head-side">
+        <span class="admin-count">{{len .List}} 个</span>
+        <a class="btn btn-sm" href="/admin/projects/new">＋ 新建项目</a>
+      </div>
     </header>
 
     {{if .List}}
-    <div class="table-wrap panel">
-      <table>
+    <div class="admin-panel">
+      <table class="admin-table">
         <thead>
           <tr>
-            <th>标题</th>
-            <th>Slug</th>
+            <th>项目</th>
             <th>状态</th>
-            <th>置顶</th>
-            <th>排序</th>
-            <th>更新时间</th>
-            <th>操作</th>
+            <th class="cell-time">排序</th>
+            <th class="cell-time">更新时间</th>
+            <th class="col-actions">操作</th>
           </tr>
         </thead>
         <tbody>
           {{range .List}}
           <tr{{if eq .Status "archived"}} class="is-archived"{{end}}>
-            <td>{{.Title}}</td>
-            <td class="muted">{{.Slug}}</td>
-            <td>{{if eq .Status "active"}}active{{else}}archived{{end}}</td>
-            <td>{{if .Featured}}★{{else}}—{{end}}</td>
-            <td class="muted">{{.SortOrder}}</td>
-            <td class="muted">{{.UpdatedAt.Local.Format "2006-01-02 15:04"}}</td>
             <td>
+              <div class="cell-title">
+                <span class="cell-title-main">{{.Title}}</span>
+                <span class="cell-title-sub">/{{.Slug}}{{if .Featured}} · ★ 置顶{{end}}</span>
+              </div>
+            </td>
+            <td>
+              {{if eq .Status "active"}}<span class="badge is-live">运行中</span>{{else}}<span class="badge is-draft">已归档</span>{{end}}
+            </td>
+            <td class="cell-time">{{if .SortOrder}}{{.SortOrder}}{{else}}—{{end}}</td>
+            <td class="cell-time">{{.UpdatedAt.Local.Format "2006-01-02 15:04"}}</td>
+            <td class="cell-actions">
               <a class="btn btn-ghost btn-sm" href="/admin/projects/{{.ID}}/edit">编辑</a>
               <button class="btn btn-danger btn-sm js-delete" type="button" data-url="/admin/projects/{{.ID}}">删除</button>
             </td>
@@ -58,7 +64,10 @@
       </table>
     </div>
     {{else}}
-    <p class="muted">还没有项目。</p>
+    <div class="empty">
+      <p>机架上还是空的。添加第一个项目，让它开始运转。</p>
+      <a class="btn btn-sm" href="/admin/projects/new">＋ 新建项目</a>
+    </div>
     {{end}}
   </main>
 

@@ -58,16 +58,55 @@
     var previewStatus = document.getElementById("preview-status");
     if (!content || !preview || !previewStatus) return;
 
+    // 预览头与状态元素：缺失时降级为 null，不影响预览主体
+    var titleInput = form.querySelector('input[name="title"]');
+    var slugInput = form.querySelector('input[name="slug"]');
+    var summaryInput = form.querySelector('textarea[name="summary"]');
+    var countEl = document.getElementById("editor-count");
+    var dirtyEl = document.getElementById("editor-dirty");
+    var previewTitle = document.getElementById("preview-title");
+    var previewSlug = document.getElementById("preview-slug");
+    var previewSummary = document.getElementById("preview-summary");
+
     var dirty = false;
     var timer = null;
     var inFlight = null;
     var lastRendered = null;
 
+    // 把标题 / slug / 摘要 / 字数同步进预览头和条带。
+    // 纯 textContent 写入：不拼 HTML，天然免疫标题里的尖括号
+    function updateMeta() {
+      var md = content.value;
+
+      if (countEl) {
+        var n = md.trim() === "" ? 0 : md.trim().length;
+        countEl.textContent = n + " 字";
+      }
+      if (previewTitle && titleInput) {
+        previewTitle.textContent = titleInput.value.trim() || "未命名";
+      }
+      if (previewSlug && slugInput) {
+        var slug = slugInput.value.trim();
+        previewSlug.textContent = slug ? "/" + slug : "/draft";
+      }
+      if (previewSummary && summaryInput) {
+        var summary = summaryInput.value.trim();
+        previewSummary.textContent = summary;
+        previewSummary.hidden = summary === "";
+      }
+    }
+
+    function setDirty(next) {
+      dirty = next;
+      if (dirtyEl) dirtyEl.hidden = !next;
+    }
+
     form.addEventListener("input", function () {
-      dirty = true;
+      setDirty(true);
+      updateMeta();
     });
     form.addEventListener("submit", function () {
-      dirty = false;
+      setDirty(false);
     });
 
     // 有未保存修改时，关闭/刷新页面前由浏览器弹确认框
@@ -94,7 +133,7 @@
       if (md === lastRendered) return;
 
       if (md.trim() === "") {
-        preview.innerHTML = '<p class="muted">正文渲染结果将显示在这里。</p>';
+        preview.innerHTML = '<p class="editor-preview-empty">正文渲染结果会实时出现在这里。</p>';
         previewStatus.textContent = "";
         lastRendered = md;
         return;
@@ -141,6 +180,8 @@
       timer = setTimeout(renderPreview, 450);
     });
 
+    // 首屏：预览头与字数先按已保存内容渲染一次
+    updateMeta();
     renderPreview();
   }
 

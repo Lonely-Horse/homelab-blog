@@ -14,25 +14,31 @@
   {{template "site-nav" .}}
 
   <main class="container">
-    <header class="page-head">
-      <h1>博客</h1>
-      <p class="muted">共 {{len .List}} 篇</p>
+    <header class="masthead">
+      <div>
+        <h1>博客</h1>
+        <p class="masthead-sub">一台 VPS、几个容器，和一些踩过的坑。</p>
+      </div>
+      <p class="masthead-meta">{{len .List}} 篇已发布</p>
     </header>
 
     {{if .List}}
-    <ul class="post-list">
-      {{range .List}}
-      <li>
-        <a class="post-card" href="/post/{{.Slug}}">
-          {{with .PublishedAt}}<time class="post-card-date">{{.Local.Format "2006-01-02"}}</time>{{end}}
-          <h2 class="post-card-title">{{.Title}}</h2>
-          {{if .Summary}}<p class="post-card-summary">{{.Summary}}</p>{{end}}
+    <ul class="log-list">
+      {{range $i, $post := .List}}
+      <li class="log-item{{if eq $i 0}} is-lead{{end}}">
+        <a class="log-entry" href="/post/{{$post.Slug}}">
+          <time class="log-date"{{with $post.PublishedAt}} datetime="{{.Format "2006-01-02"}}"{{end}}>{{with $post.PublishedAt}}{{.Local.Format "2006.01.02"}}{{end}}</time>
+          <span class="log-rail" aria-hidden="true"><span class="log-node"></span></span>
+          <div class="log-body">
+            <h2 class="log-title">{{$post.Title}}</h2>
+            {{if $post.Summary}}<p class="log-summary">{{$post.Summary}}</p>{{end}}
+          </div>
         </a>
       </li>
       {{end}}
     </ul>
     {{else}}
-    <p class="muted">还没有发布的文章。</p>
+    <p class="empty">还没有发布的文章。</p>
     {{end}}
   </main>
 

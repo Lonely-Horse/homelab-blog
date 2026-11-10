@@ -18,6 +18,7 @@ type PostsPageData struct {
 	Title       string
 	Summary     string
 	ContentHTML template.HTML
+	PublishedAt *time.Time
 	UpdateAt    time.Time
 }
 
@@ -85,7 +86,7 @@ func (s *Server) handlerPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.render(w, http.StatusOK, "post.html", PostsPageData{Title: post.Title, Summary: post.Summary, ContentHTML: template.HTML(post.ContentHTML), UpdateAt: post.UpdatedAt})
+	s.render(w, http.StatusOK, "post.html", PostsPageData{Title: post.Title, Summary: post.Summary, ContentHTML: template.HTML(post.ContentHTML), PublishedAt: post.PublishedAt, UpdateAt: post.UpdatedAt})
 
 }
 

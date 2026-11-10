@@ -16,16 +16,25 @@
   <main class="container">
     <p class="back-row"><a class="navlink" href="/posts">← 返回文章</a></p>
 
-    <article class="panel article">
+    <article class="article">
       <header class="article-head">
+        <p class="article-eyebrow">
+          <span class="article-kicker">Post</span>
+          {{with .PublishedAt}}<time datetime="{{.Format "2006-01-02T15:04:05Z07:00"}}">{{.Local.Format "2006.01.02"}}</time>{{end}}
+        </p>
         <h1>{{.Title}}</h1>
         {{if .Summary}}<p class="article-summary">{{.Summary}}</p>{{end}}
       </header>
-      <div class="prose">{{.ContentHTML}}</div>
 
-      {{if not .UpdateAt.IsZero}}
-      <p class="muted updated-at">最后更新：{{.UpdateAt.Local.Format "2006-01-02 15:04"}}</p>
-      {{end}}
+      <div class="article-body prose">{{.ContentHTML}}</div>
+
+      <footer class="article-foot">
+        {{if not .UpdateAt.IsZero}}
+        <span>最后更新 {{.UpdateAt.Local.Format "2006-01-02 15:04"}}</span>
+        {{end}}
+        <span class="spacer"></span>
+        <a href="/posts">← 全部文章</a>
+      </footer>
     </article>
   </main>
 
