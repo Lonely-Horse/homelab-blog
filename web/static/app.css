@@ -79,7 +79,14 @@ html[data-theme="light"] {
 /* ---------- 基础 ---------- */
 *, *::before, *::after { box-sizing: border-box; }
 
-html { -webkit-text-size-adjust: 100%; }
+html {
+  -webkit-text-size-adjust: 100%;
+  /* 画布也染成主题底色：平板/手机上浏览器工具栏收起、页面回弹、
+     或合成层与可视视口错位时，露出来的画布默认是纯白 */
+  background-color: var(--bg);
+  /* 关掉“下拉回弹 / 横向回弹”，避免拖动页面时露出画布 */
+  overscroll-behavior: none;
+}
 
 body {
   margin: 0;
@@ -1532,16 +1539,22 @@ html[data-theme="light"] .auth-card {
    入场分四级依次浮起；拖动时由 JS 写入 --drag(0~1)，
    内容随之上浮淡出，形成“把幕布拉起来”的视差。 */
 .curtain {
-  position: fixed;
-  inset: 0;
+  /* 不再用 position:fixed：平板浏览器的可视视口会随工具栏位移，
+     fixed 幕布会被锚在偏移过的视口上，顶部漏一条白带。
+     改成 body（flex 纵向、min-height:100dvh）里的正常子项，
+     尺寸完全由文档流决定，不依赖视口锚点 */
+  position: relative;
   z-index: 100;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
   place-items: center;
   /* 提前上合成层：拖动只走 GPU 合成，不触发重排/重绘 */
   transform: translate3d(0, 0, 0);
   will-change: transform;
   backface-visibility: hidden;
-  contain: strict;
   touch-action: none;
   cursor: grab;
   user-select: none;

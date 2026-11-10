@@ -73,6 +73,9 @@
       if (opened) return;
       opened = true;
       curtain.classList.remove("is-dragging");
+      // 清掉手势期间写入的行内 transform：行内样式优先级高于 .is-open，
+      // 残留一次平板上的“异常中断”就会把幕布顶偏、露出底色
+      curtain.style.transform = "";
       curtain.style.setProperty("--drag", "0");
       curtain.classList.add("is-open");
 
@@ -157,6 +160,19 @@
 
     curtain.addEventListener("pointerup", endDrag);
     curtain.addEventListener("pointercancel", endDrag);
+    // 触摸被系统/浏览器打断时可能只发 lostpointercapture：
+    // 这里只做归位（不判定是否进入），避免残留位移把幕布顶偏
+    curtain.addEventListener("lostpointercapture", function () {
+      if (!dragging) return;
+      dragging = false;
+      if (rafId !== null) {
+        window.cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+      curtain.classList.remove("is-dragging");
+      curtain.style.transform = "";
+      curtain.style.setProperty("--drag", "0");
+    });
   }
 
   /* ---------- 启动 ---------- */
