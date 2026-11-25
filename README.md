@@ -15,13 +15,13 @@
 | 关于页 | 已实现 | 站主简介在线编辑 |
 | 认证 | 已实现 | PBKDF2 加盐 + 会话表 + 页面 / API 双中间件 |
 | Markdown | 已实现 | 自研解析器（纯标准库），渲染期产 HTML 并入库 |
+| 文章目录（TOC） | 已实现 | 与正文同源产出（`Render` 一次遍历同时返回 HTML 与标题切片）；右侧挂载卡片、可折叠、滚动高亮、无 JS 可用 |
 | 静态资源与模板 | 已实现 | 编译期 `//go:embed` 内嵌进二进制，无需外部文件 |
 | 离线部署 | 已实现 | 多阶段 Docker 镜像（非 root 运行）+ docker-compose |
 | 安全响应头 | 已实现 | CSP / X-Frame-Options / nosniff / Referrer-Policy |
 | 登录限流 | 已实现 | 按客户端 IP 的失败计数窗口（默认 5 次 / 60s） |
-| 文章目录（TOC） | 未实现 | 仅有设计（技术文档 §20），代码里没有任何 `toc_html` 或标题 `id` |
+| 渲染回填 | 已实现 | `cmd/render-backfill`：解析器升级后重算 `content_html` / `toc_html`，幂等可重跑 |
 | 图片上传 | 未实现 | `admin.js` 中仍为 TODO；上传能力目前只用于项目 ZIP 附件 |
-| 自动化测试 | 未实现 | 仓库内 `*_test.go` 数量为 0 |
 
 ## 技术栈
 
@@ -41,6 +41,7 @@
 homelab-blog/
 ├── main.go                 # 仅调用 app.Run()
 ├── cmd/admin-seed/         # 一次性创建 / 重置管理员账号
+├── cmd/render-backfill/    # 解析器升级后回填 content_html / toc_html（幂等，支持 -dry-run）
 ├── internal/
 │   ├── app/                # 组合根：装配依赖并启动
 │   ├── config/             # 全部配置默认值
@@ -92,6 +93,17 @@ go run ./cmd/admin-seed -user admin
 | 关于页 | http://127.0.0.1:5200/about |
 | 后台登录 | http://127.0.0.1:5200/admin/login |
 
+**4.（解析器升级后）回填旧文章**
+
+`ParserVersion` 每次随解析器改动 +1。升级后旧文章的 `content_html` / `toc_html` 仍是旧产物，用回填命令重算：
+
+```bash
+go run ./cmd/render-backfill -dry-run   # 先预演：只统计、不写库
+go run ./cmd/render-backfill            # 确认条数后正式回填
+```
+
+只处理 `render_version` 低于当前 `ParserVersion` 的文章，逐篇失败即停，可安全重跑（幂等）。
+
 ## 配置
 
 **环境变量**
@@ -112,6 +124,7 @@ go run ./cmd/admin-seed -user admin
 | 限流 | `LoginRatePerMin` / `LoginRateWindow` | `5` 次 / `60s` |
 | 密码 | `PBKDF2Iterations` / `PBKDF2KeyLength` / `SaltLength` | `600000` / `32` / `16` |
 | 上传 | `MaxUploadBytes` / `UploadMemoryBytes` / `UploadsDir` | `60 MiB` / `5 MiB` / `./data/uploads` |
+| 解析器 | `ParserVersion` | `2`（随解析逻辑改动 +1，驱动旧文章回填） |
 
 ## 接口一览
 
@@ -144,6 +157,7 @@ go run ./cmd/admin-seed -user admin
 | GET | `/admin/posts/{id}/edit` | 编辑文章页 |
 | POST | `/admin/posts/{id}` | 更新文章 |
 | DELETE | `/admin/posts/{id}` | 删除文章（API 鉴权，前端 `fetch` 调用） |
+| POST | `/admin/preview` | Markdown 预览（API 鉴权，返回 `{"html": ...}`；预览不生成目录，见技术文档 §20.7） |
 
 ### 管理 · 项目库（均需登录）
 
@@ -200,13 +214,21 @@ go run ./cmd/admin-seed -user admin
 - 下载：`GET /projects/{id}/download`，响应头带 `Attachment`，由 `http.ServeFile` 发送。
 - 项目被删除 / 附件被替换时，旧文件会被清理。
 
+## 文章目录（TOC）
+
+- **同源产出**：`markdown.Render` 一次遍历同时返回正文 HTML 与 `[]Heading`，目录由 `RenderTOC` 建树渲染；`content_html` 与 `toc_html` 同事务写入，不会互相漂移。
+- **收录范围**：只收 h2–h4；少于 3 个标题的文章不生成目录（`toc_html` 为空串，布局自动回单列）。
+- **锚点 id 由内容派生**：转小写、保留 Unicode 字母与数字（含汉字）、其余字符折叠为单个 `-`；空标题回退 `sec-N`；同名标题追加 `-2`、`-3`。规则完全确定，重渲染不会让已分享的锚点失效。
+- **展示**：视口 ≥ 1300px 时以卡片形态挂载在页面右侧（`position: fixed`，不占正文栏宽）；更窄时自动隐藏。
+- **交互**（[web/static/app.js](web/static/app.js)）：子树可折叠（按钮悬停才浮现）、滚动时高亮当前小节；禁用 JS 时目录仍完整可见、可点击跳转。
+
 ## 数据模型
 
-SQLite，单文件，迁移靠 `PRAGMA user_version` 幂等推进（`schema.sql` 编译期内嵌）。
+SQLite，单文件，迁移靠 `PRAGMA user_version` 幂等推进（当前 `user_version = 3`，`schema.sql` 编译期内嵌）。
 
 | 表 | 用途 | 关键约束 |
 | :--- | :--- | :--- |
-| `posts` | 文章 | `slug` 唯一；`status` 默认 `draft`；`render_version` 记录解析器版本 |
+| `posts` | 文章 | `slug` 唯一；`status` 默认 `draft`；`render_version` 记录解析器版本；`toc_html` 存目录 HTML |
 | `projects` | 项目库 | `slug` 唯一；`status` 默认 `active`；`archive_path` 存附件文件名 |
 | `admins` | 管理员 | `username` 唯一；存 `password_hash` / `salt` / `iterations` |
 | `sessions` | 会话 | `token` 主键；`admin_id` 外键级联删除；`expires_at` 建索引 |
@@ -235,11 +257,12 @@ docker build \
 | 项 | 值 |
 | :--- | :--- |
 | Builder | `golang:1.25-alpine`（`CGO_ENABLED=0`，`-ldflags="-s -w"`） |
-| Runtime | `alpine:3.24` + `ca-certificates` |
+| Runtime | `alpine:3.24` + `ca-certificates` + `tzdata` |
 | 运行用户 | `appuser`（UID/GID 由 `--build-arg` 决定，默认 `1000`） |
 | 工作目录 | `/app` |
 | 端口 | `5200` |
 | 入口 | `./homelab-blog` |
+| 附带二进制 | `./admin-seed`（容器内可执行）；**`render-backfill` 不在镜像内**，需要时在能访问 `./data` 卷的机器上用 `go run ./cmd/render-backfill` 执行 |
 
 `docker/docker-compose.yaml` 关键项：
 
@@ -247,7 +270,7 @@ docker build \
 | :--- | :--- |
 | `ports` | 形如 `<本机地址>:5200:5200`，绑定到具体网卡地址 |
 | `volumes` | `./data:/app/data`（相对 compose 文件所在目录，即 `docker/data`） |
-| `environment` | `SESSION_COOKIE_SECURE` |
+| `environment` | `SESSION_COOKIE_SECURE`、`TZ=Asia/Shanghai` |
 | `restart` | `unless-stopped` |
 
 **部署注意**

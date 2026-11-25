@@ -1,5 +1,6 @@
 data/
 .codegraph
 bin/
+.screenshots/
 技术文档.md
 README.md
