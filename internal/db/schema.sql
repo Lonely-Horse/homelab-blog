@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS posts (
     summary TEXT DEFAULT '',
     content_md TEXT NOT NULL,
     content_html TEXT NOT NULL,
+    toc_html TEXT NOT NULL DEFAULT '',
     status TEXT NOT NULL DEFAULT 'draft',
     created_at DATETIME NOT NULL,
     updated_at DATETIME NOT NULL,

@@ -17,6 +17,7 @@ type Post struct {
 	Summary       string
 	ContentMD     string
 	ContentHTML   string
+	TOCHTML       string
 	Status        string // "draft" | "published"
 	CreatedAt     time.Time
 	UpdatedAt     time.Time

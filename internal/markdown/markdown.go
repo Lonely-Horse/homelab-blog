@@ -30,9 +30,8 @@ func splitParagraphs(src string) []string {
 	return blocks
 }
 
-func Render(src string) string {
-	src = preprocess(src)
-	lines := strings.Split(src, "\n")
-	return renderBlocks(scanBlocks(lines))
-
+func Render(src string) (string, []Heading) {
+	r := &renderer{seen: map[string]int{}}
+	body := r.renderBlocks(scanBlocks(strings.Split(preprocess(src), "\n")))
+	return body, r.headings
 }

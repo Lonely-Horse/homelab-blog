@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func renderBlocks(bs []block) string {
+func (r *renderer) renderBlocks(bs []block) string {
 	var out strings.Builder
 	for _, b := range bs {
 		switch b.kind {
@@ -43,7 +43,7 @@ func renderBlocks(bs []block) string {
 
 		//当文本为多级标题的时候，触发
 		case blockHeading:
-			fmt.Fprintf(&out, "<h%d>%s</h%d>\n", b.level, html.EscapeString(b.lines[0]), b.level)
+			out.WriteString(r.heading(b))
 
 		//该行属于---的时候，我们完成转义
 		case blockHR:

@@ -36,6 +36,8 @@
         <a href="/posts">← 全部文章</a>
       </footer>
     </article>
+
+    <aside class="toc" aria-label="文章目录">{{if .TOCHTML}}<p class="toc-title">此页上</p><div class="toc-scroll">{{.TOCHTML}}</div>{{end}}</aside>
   </main>
 
   {{template "site-footer" .}}

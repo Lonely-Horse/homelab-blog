@@ -15,12 +15,12 @@ func (s *Server) handlerAboutPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	content_html := markdown.Render(profile.ContentMD)
+	contentHTML, _ := markdown.Render(profile.ContentMD)
 
 	// 只有已登录才在 /about 暴露管理入口（红线：入口不得泄露给匿名用户）
 	isAdmin := s.checkAuth(r) != nil
 
-	s.render(w, http.StatusOK, "about.html", AboutPageData{Posts: profile.Posts, Projects: profile.Projects, ContentHTML: template.HTML(content_html), UpdatedAt: profile.UpdatedAt, IsAdmin: isAdmin})
+	s.render(w, http.StatusOK, "about.html", AboutPageData{Posts: profile.Posts, Projects: profile.Projects, ContentHTML: template.HTML(contentHTML), UpdatedAt: profile.UpdatedAt, IsAdmin: isAdmin})
 
 }
 
@@ -42,9 +42,9 @@ func (s *Server) handlerAboutSavePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	content_md := r.PostForm.Get("content_md")
+	contentMD := r.PostForm.Get("content_md")
 
-	err = s.profile.Save(&profile.Profile{ContentMD: content_md, UpdatedAt: time.Now().UTC()})
+	err = s.profile.Save(&profile.Profile{ContentMD: contentMD, UpdatedAt: time.Now().UTC()})
 	if err != nil {
 		s.render(w, http.StatusInternalServerError, "error.html", ErrorPageData{Status: http.StatusInternalServerError, Message: "The save failed"})
 		return

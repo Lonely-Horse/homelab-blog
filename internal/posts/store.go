@@ -49,8 +49,8 @@ func (s *Store) Create(p *Post) (int64, error) {
 	p.UpdatedAt = now
 	p.RenderVersion = s.cfg.ParserVersion
 
-	query2 := "INSERT INTO posts(slug,title,summary,content_md,content_html,status,created_at,updated_at,published_at,render_version) VALUES (?,?,?,?,?,?,?,?,?,?)"
-	res, err := tx.Exec(query2, p.Slug, p.Title, p.Summary, p.ContentMD, p.ContentHTML, p.Status, p.CreatedAt, p.UpdatedAt, p.PublishedAt, p.RenderVersion)
+	query2 := "INSERT INTO posts(slug,title,summary,content_md,content_html,toc_html,status,created_at,updated_at,published_at,render_version) VALUES (?,?,?,?,?,?,?,?,?,?,?)"
+	res, err := tx.Exec(query2, p.Slug, p.Title, p.Summary, p.ContentMD, p.ContentHTML, p.TOCHTML, p.Status, p.CreatedAt, p.UpdatedAt, p.PublishedAt, p.RenderVersion)
 	if err != nil {
 		return 0, err
 	}
@@ -109,8 +109,8 @@ func (s *Store) Update(p *Post) error {
 		p.PublishedAt = oldPublishedAt
 	}
 
-	query3 := "UPDATE posts SET slug = ?,title = ?,summary = ?,content_md = ?,content_html = ?,status = ?,updated_at = ?,published_at = ?,render_version = ? WHERE id = ?"
-	res, err := tx.Exec(query3, p.Slug, p.Title, p.Summary, p.ContentMD, p.ContentHTML, p.Status, p.UpdatedAt, p.PublishedAt, p.RenderVersion, p.ID)
+	query3 := "UPDATE posts SET slug = ?,title = ?,summary = ?,content_md = ?,content_html = ?,toc_html= ?,status = ?,updated_at = ?,published_at = ?,render_version = ? WHERE id = ?"
+	res, err := tx.Exec(query3, p.Slug, p.Title, p.Summary, p.ContentMD, p.ContentHTML, p.TOCHTML, p.Status, p.UpdatedAt, p.PublishedAt, p.RenderVersion, p.ID)
 	if err != nil {
 		return err
 	}
@@ -145,12 +145,12 @@ func (s *Store) Delete(id int64) error {
 	return nil
 }
 
-const selectPostCols = `id,slug,title,summary,content_md,content_html,status,created_at,updated_at,published_at,render_version`
+const selectPostCols = `id,slug,title,summary,content_md,content_html,toc_html,status,created_at,updated_at,published_at,render_version`
 
 func (s *Store) GetBySlug(slug string) (*Post, error) {
 	post := &Post{}
 	query := "SELECT " + selectPostCols + " FROM posts WHERE slug = ?"
-	err := s.db.QueryRow(query, slug).Scan(&post.ID, &post.Slug, &post.Title, &post.Summary, &post.ContentMD, &post.ContentHTML, &post.Status, &post.CreatedAt, &post.UpdatedAt, &post.PublishedAt, &post.RenderVersion)
+	err := s.db.QueryRow(query, slug).Scan(&post.ID, &post.Slug, &post.Title, &post.Summary, &post.ContentMD, &post.ContentHTML, &post.TOCHTML, &post.Status, &post.CreatedAt, &post.UpdatedAt, &post.PublishedAt, &post.RenderVersion)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
 		return nil, ErrNotFound
@@ -164,7 +164,7 @@ func (s *Store) GetBySlug(slug string) (*Post, error) {
 func (s *Store) GetById(id int64) (*Post, error) {
 	post := &Post{}
 	query := "SELECT " + selectPostCols + " FROM posts WHERE id = ?"
-	err := s.db.QueryRow(query, id).Scan(&post.ID, &post.Slug, &post.Title, &post.Summary, &post.ContentMD, &post.ContentHTML, &post.Status, &post.CreatedAt, &post.UpdatedAt, &post.PublishedAt, &post.RenderVersion)
+	err := s.db.QueryRow(query, id).Scan(&post.ID, &post.Slug, &post.Title, &post.Summary, &post.ContentMD, &post.ContentHTML, &post.TOCHTML, &post.Status, &post.CreatedAt, &post.UpdatedAt, &post.PublishedAt, &post.RenderVersion)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
 		return nil, ErrNotFound
@@ -186,7 +186,7 @@ func (s *Store) ListPublished() ([]*Post, error) {
 	var posts []*Post
 	for rows.Next() {
 		post := &Post{}
-		err := rows.Scan(&post.ID, &post.Slug, &post.Title, &post.Summary, &post.ContentMD, &post.ContentHTML, &post.Status, &post.CreatedAt, &post.UpdatedAt, &post.PublishedAt, &post.RenderVersion)
+		err := rows.Scan(&post.ID, &post.Slug, &post.Title, &post.Summary, &post.ContentMD, &post.ContentHTML, &post.TOCHTML, &post.Status, &post.CreatedAt, &post.UpdatedAt, &post.PublishedAt, &post.RenderVersion)
 		if err != nil {
 			return nil, err
 		}
@@ -212,7 +212,7 @@ func (s *Store) ListAll() ([]*Post, error) {
 	var posts []*Post
 	for rows.Next() {
 		post := &Post{}
-		err := rows.Scan(&post.ID, &post.Slug, &post.Title, &post.Summary, &post.ContentMD, &post.ContentHTML, &post.Status, &post.CreatedAt, &post.UpdatedAt, &post.PublishedAt, &post.RenderVersion)
+		err := rows.Scan(&post.ID, &post.Slug, &post.Title, &post.Summary, &post.ContentMD, &post.ContentHTML, &post.TOCHTML, &post.Status, &post.CreatedAt, &post.UpdatedAt, &post.PublishedAt, &post.RenderVersion)
 		if err != nil {
 			return nil, err
 		}

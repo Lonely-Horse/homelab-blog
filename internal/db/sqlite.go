@@ -13,7 +13,7 @@ import (
 	_ "github.com/glebarez/go-sqlite"
 )
 
-const schemaVersion = 2
+const schemaVersion = 3
 
 //go:embed schema.sql
 var schemaSQL string
@@ -79,7 +79,7 @@ func migrate(db *sql.DB) error {
 	defer rows.Close()
 
 	hasCol := false
-
+	hasTOC := false
 	for rows.Next() {
 		var (
 			cid     int
@@ -98,6 +98,9 @@ func migrate(db *sql.DB) error {
 		if name == "render_version" {
 			hasCol = true
 		}
+		if name == "toc_html" {
+			hasTOC = true
+		}
 	}
 
 	err = rows.Err()
@@ -108,6 +111,13 @@ func migrate(db *sql.DB) error {
 
 	if !hasCol {
 		_, err := tx.Exec("ALTER TABLE posts ADD COLUMN render_version INTEGER NOT NULL DEFAULT 0")
+		if err != nil {
+			return err
+		}
+	}
+
+	if !hasTOC {
+		_, err := tx.Exec("ALTER TABLE posts ADD COLUMN toc_html TEXT NOT NULL DEFAULT ''")
 		if err != nil {
 			return err
 		}

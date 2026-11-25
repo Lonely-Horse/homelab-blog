@@ -113,7 +113,6 @@ func run(user string, reset bool) error {
 	}
 
 	return nil
-
 }
 
 func main() {

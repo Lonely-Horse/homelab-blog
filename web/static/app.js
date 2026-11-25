@@ -175,6 +175,90 @@
     });
   }
 
+  /* ---------- 文章目录：折叠子树 + 滚动高亮（§20.6） ----------
+     结构与 id 全在后端 toc_html 里；这里只加按钮与状态类。
+     不用 <details>/<summary>（链接与折叠不可分离），不用 IntersectionObserver
+     （答的是"是否可见"，不是"读到哪节"）。 */
+  function bindTOC() {
+    var nav = document.querySelector(".toc .toc-nav");
+    var body = document.querySelector(".article-body");
+    if (!nav || !body) return;
+
+    // 折叠：有子列表的 li 前置一个 <button>，点按钮只折叠、点链接只跳转
+    var items = nav.querySelectorAll("li");
+    Array.prototype.forEach.call(items, function (li) {
+      var sub = null;
+      for (var i = 0; i < li.children.length; i++) {
+        if (li.children[i].tagName === "OL") { sub = li.children[i]; break; }
+      }
+      if (!sub) return;
+      li.classList.add("has-children");
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "toc-toggle";
+      btn.setAttribute("aria-expanded", "true");
+      btn.setAttribute("aria-label", "折叠或展开该小节");
+      btn.addEventListener("click", function () {
+        var collapsed = li.classList.toggle("is-collapsed");
+        btn.setAttribute("aria-expanded", collapsed ? "false" : "true");
+      });
+      li.insertBefore(btn, li.firstChild);
+    });
+
+    var links = nav.querySelectorAll('a[href^="#"]');
+    var headings = body.querySelectorAll("h2[id], h3[id], h4[id]");
+    if (!links.length || !headings.length) return;
+
+    // offsetTop 是相对最近定位祖先的（.article 是 relative），
+    // 必须沿 offsetParent 链累加成文档坐标，才能与 scrollY 比较
+    function docTop(el) {
+      var t = 0;
+      while (el) { t += el.offsetTop; el = el.offsetParent; }
+      return t;
+    }
+    var tops = [];
+    function measure() {
+      tops = [];
+      Array.prototype.forEach.call(headings, function (h) { tops.push(docTop(h)); });
+    }
+    measure();
+
+    var OFFSET = 96; // 与 scroll-margin-top 对齐
+    var ticking = false;
+
+    function update() {
+      ticking = false;
+      var y = window.scrollY + OFFSET;
+      var current = null;
+      for (var i = 0; i < headings.length; i++) {
+        if (tops[i] <= y) { current = headings[i].id; } else { break; }
+      }
+      // 页底最后一节可能永远够不到 OFFSET 线：触底时强制激活最后一条
+      var doc = document.documentElement;
+      if (window.scrollY + window.innerHeight >= doc.scrollHeight - 2) {
+        current = headings[headings.length - 1].id;
+      }
+      Array.prototype.forEach.call(links, function (a) {
+        if (current && a.getAttribute("href") === "#" + current) {
+          a.setAttribute("aria-current", "true");
+        } else {
+          a.removeAttribute("aria-current");
+        }
+      });
+    }
+
+    function onScroll() {
+      if (!ticking) { ticking = true; window.requestAnimationFrame(update); }
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    // resize 后布局坐标会变：必须重测 tops 再刷新高亮，否则锚点错位
+    window.addEventListener("resize", function () {
+      measure();
+      onScroll();
+    }, { passive: true });
+    update();
+  }
+
   /* ---------- 启动 ---------- */
   // 主题尽量早应用，减少首屏闪烁（CSP 禁内联脚本，无法在 <head> 同步执行）
   var saved = readTheme();
@@ -184,5 +268,6 @@
     bindThemeToggle();
     bindBack();
     bindCurtain();
+    bindTOC();
   });
 })();

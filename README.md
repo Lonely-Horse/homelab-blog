@@ -11,14 +11,17 @@
 | 模块 | 状态 | 说明 |
 | :--- | :--- | :--- |
 | 文章 | 已实现 | 草稿 / 发布、列表、详情、新建、编辑、删除 |
-| 项目库 | 已实现 | 项目卡片、标签、封面、状态、排序、置顶、附件（ZIP）下载 |
+| 项目库 | 已实现 | 项目卡片、标签、状态、排序、置顶、ZIP 附件上传 / 下载（`cover_image` 列保留但无表单字段、不渲染） |
 | 关于页 | 已实现 | 站主简介在线编辑 |
 | 认证 | 已实现 | PBKDF2 加盐 + 会话表 + 页面 / API 双中间件 |
 | Markdown | 已实现 | 自研解析器（纯标准库），渲染期产 HTML 并入库 |
 | 静态资源与模板 | 已实现 | 编译期 `//go:embed` 内嵌进二进制，无需外部文件 |
 | 离线部署 | 已实现 | 多阶段 Docker 镜像（非 root 运行）+ docker-compose |
 | 安全响应头 | 已实现 | CSP / X-Frame-Options / nosniff / Referrer-Policy |
-| 登录限流 | 已实现 | 按客户端 IP 的内存令牌桶 |
+| 登录限流 | 已实现 | 按客户端 IP 的失败计数窗口（默认 5 次 / 60s） |
+| 文章目录（TOC） | 未实现 | 仅有设计（技术文档 §20），代码里没有任何 `toc_html` 或标题 `id` |
+| 图片上传 | 未实现 | `admin.js` 中仍为 TODO；上传能力目前只用于项目 ZIP 附件 |
+| 自动化测试 | 未实现 | 仓库内 `*_test.go` 数量为 0 |
 
 ## 技术栈
 
@@ -171,7 +174,6 @@ go run ./cmd/admin-seed -user admin
 | `summary` | 是 | 非空 |
 | `github_url` | 否 | 留空放行；填了必须以 `https://github.com/` 开头 |
 | `demo_url` | 否 | 留空放行；填了必须以 `https://` 开头 |
-| `cover_image` | 否 | 封面图 URL |
 | `tech_stack` | 否 | 逗号分隔的标签串 |
 | `status` | 是 | 仅 `active` / `archived` |
 | `featured` | 否 | 勾选即置顶 |
@@ -212,9 +214,9 @@ SQLite，单文件，迁移靠 `PRAGMA user_version` 幂等推进（`schema.sql`
 
 ## 安全设计
 
-- **后台不裸露公网**：生产环境可在 Nginx 用 `location ^~ /admin` 只放行 Tailscale 网段，Go 层双中间件作第二道防线。
+- **后台不裸露公网**：当前部署把端口只绑到 Tailscale 地址（`100.64.0.1:5200`），公网不可路由；若将来经 Nginx 暴露公网，再加 `location ^~ /admin` 只放行 Tailscale 网段，Go 层双中间件是第二道防线。
 - **双中间件**：页面路由未登录 → `303` 跳登录页；fetch 数据路由未登录 → `401` JSON（避免 fetch 跟随重定向被误判为成功）。
-- **XSS 防护**：CSP 禁内联（`script-src 'self'`）；Markdown 输出文本强制 HTML 转义；链接 / 图片 URL 走 scheme 白名单。
+- **XSS 防护**：CSP 禁内联（`script-src 'self'`）；Markdown 输出文本强制 HTML 转义；链接 URL 走 `http/https` 白名单（图片语法当前不支持）。
 - **响应头**：[middleware.go](internal/server/middleware.go) 统一注入 `X-Content-Type-Options: nosniff`、`X-Frame-Options: DENY`、`Content-Security-Policy`、`Referrer-Policy`；`/admin` 额外 `Cache-Control: no-store`。
 - **Cookie**：`HttpOnly` + `SameSite=Lax`，HTTPS 下 `Secure=true`。
 - **登录限流**：防 PBKDF2 被当作 CPU 放大点打满，同时抑制暴力猜密。
@@ -244,7 +246,7 @@ docker build \
 | 字段 | 说明 |
 | :--- | :--- |
 | `ports` | 形如 `<本机地址>:5200:5200`，绑定到具体网卡地址 |
-| `volumes` | `../data:/app/data`（相对 compose 文件所在目录解析） |
+| `volumes` | `./data:/app/data`（相对 compose 文件所在目录，即 `docker/data`） |
 | `environment` | `SESSION_COOKIE_SECURE` |
 | `restart` | `unless-stopped` |
 
@@ -256,4 +258,5 @@ docker build \
 
 ## 相关文档
 
-- [技术文档.md](技术文档.md)——完整设计：系统架构、路由表、数据模型、解析器铁律、部署方案、验收清单、决策记录（ADR）
+- [技术文档-v2.0.md](document/技术文档-v2.0.md)——完整设计：系统架构、路由表、数据模型、解析器铁律、部署方案、验收清单、决策记录（ADR）；文档内已标注「已实现 / 未实现」。
+- [技术文档.md](document/技术文档.md)——v1.9 设计冻结版，仅作历史存档，不再更新。

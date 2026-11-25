@@ -58,7 +58,7 @@ func (s *Server) handlerCreatePost(w http.ResponseWriter, r *http.Request) {
 	title := r.PostForm.Get("title")
 	slug := r.PostForm.Get("slug")
 	summary := r.PostForm.Get("summary")
-	content_md := r.PostForm.Get("content_md")
+	contentMD := r.PostForm.Get("content_md")
 	status := r.PostForm.Get("status")
 
 	switch {
@@ -73,11 +73,12 @@ func (s *Server) handlerCreatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	html := markdown.Render(content_md)
-	_, err = s.posts.Create(&posts.Post{Title: title, Slug: slug, Summary: summary, ContentMD: content_md, ContentHTML: html, Status: status})
+	contentHTML, headings := markdown.Render(contentMD)
+	tocHTML := markdown.RenderTOC(headings)
+	_, err = s.posts.Create(&posts.Post{Title: title, Slug: slug, Summary: summary, ContentMD: contentMD, ContentHTML: contentHTML, TOCHTML: tocHTML, Status: status})
 	switch {
 	case errors.Is(err, posts.ErrDuplicate):
-		s.render(w, http.StatusConflict, "admin_edit.html", AdminPostEditPageData{IsNew: true, FormAction: "/admin/posts", Error: "slug冲突，请换一个", Post: &posts.Post{Title: title, Slug: slug, Summary: summary, ContentMD: content_md}})
+		s.render(w, http.StatusConflict, "admin_edit.html", AdminPostEditPageData{IsNew: true, FormAction: "/admin/posts", Error: "slug冲突，请换一个", Post: &posts.Post{Title: title, Slug: slug, Summary: summary, ContentMD: contentMD}})
 		return
 	case err != nil:
 		s.render(w, http.StatusInternalServerError, "error.html", ErrorPageData{Status: http.StatusInternalServerError, Message: "The post create failed"})
@@ -131,7 +132,7 @@ func (s *Server) handlerUpdatePost(w http.ResponseWriter, r *http.Request) {
 	title := r.PostForm.Get("title")
 	slug := r.PostForm.Get("slug")
 	summary := r.PostForm.Get("summary")
-	content_md := r.PostForm.Get("content_md")
+	contentMD := r.PostForm.Get("content_md")
 	status := r.PostForm.Get("status")
 
 	switch {
@@ -146,9 +147,9 @@ func (s *Server) handlerUpdatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	content_html := markdown.Render(content_md)
-
-	err = s.posts.Update(&posts.Post{ID: id, Title: title, Slug: slug, Summary: summary, ContentMD: content_md, ContentHTML: content_html, Status: status})
+	contentHTML, headings := markdown.Render(contentMD)
+	tocHTML := markdown.RenderTOC(headings)
+	err = s.posts.Update(&posts.Post{ID: id, Title: title, Slug: slug, Summary: summary, ContentMD: contentMD, ContentHTML: contentHTML, TOCHTML: tocHTML, Status: status})
 	switch {
 	case errors.Is(err, posts.ErrDuplicate):
 		s.render(w, http.StatusConflict, "admin_edit.html", AdminPostEditPageData{
@@ -159,8 +160,9 @@ func (s *Server) handlerUpdatePost(w http.ResponseWriter, r *http.Request) {
 				Title:       title,
 				Slug:        slug,
 				Summary:     summary,
-				ContentMD:   content_md,
-				ContentHTML: content_html,
+				ContentMD:   contentMD,
+				ContentHTML: contentHTML,
+				TOCHTML:     tocHTML,
 				Status:      status,
 			},
 		})
@@ -214,12 +216,12 @@ func (s *Server) handlerPreview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	content_md := r.PostForm.Get("content_md")
+	contentMD := r.PostForm.Get("content_md")
 
-	html := markdown.Render(content_md)
+	contentHTML, _ := markdown.Render(contentMD)
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	err = json.NewEncoder(w).Encode(map[string]string{"html": html})
+	err = json.NewEncoder(w).Encode(map[string]string{"html": contentHTML})
 	if err != nil {
 		log.Printf("preview encode failed: %v", err)
 	}

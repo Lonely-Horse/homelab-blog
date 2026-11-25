@@ -76,7 +76,7 @@ func Load() (Config, error) {
 		SaltLength:       16,
 
 		//博客文章版本
-		ParserVersion: 1,
+		ParserVersion: 2,
 
 		//项目文件配置
 		MaxUploadBytes:    60 << 20,
