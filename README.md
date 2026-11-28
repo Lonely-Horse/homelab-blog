@@ -58,7 +58,11 @@ homelab-blog/
 │   └── embed.go            # //go:embed templates static
 ├── docker/
 │   ├── Dockerfile          # 多阶段构建，非 root 运行
-│   └── docker-compose.yaml
+│   └── docker-compose.yaml # 仓库内的样例；生产用部署机上同名文件（见下）
+├── .github/workflows/deploy.yml # push main → Tailscale → SSH → 远端构建
+├── homelab_blog_push_deploy.sh  # CI 触发的构建/推仓（构建在 SER7，部署在 MP9）
+├── pull_deploy.sh          # 由 push 脚本拷到 MP9 执行：compose pull + up -d
+├── document/               # 技术文档（当前 v2.2，文件名沿用 v2.0；v1.9 存档未进版本库）
 └── data/                   # 运行时数据（sqlite 库 + 上传附件），不进版本库
 ```
 
@@ -137,7 +141,7 @@ go run ./cmd/render-backfill            # 确认条数后正式回填
 | GET | `/` | 幕布首页（一次进入动效） |
 | GET | `/posts` | 博客列表（仅已发布，按发布时间倒序） |
 | GET | `/post/{slug}` | 文章详情（草稿 / 不存在 → `404`） |
-| GET | `/projects` | 项目库列表（置顶 → 排序值 → 创建时间） |
+| GET | `/projects` | 项目库列表（未归档优先 → 置顶 → 排序值 → 创建时间倒序） |
 | GET | `/projects/{id}/download` | 下载项目附件（`Attachment; filename="<slug>.zip"`；无附件 → `404`） |
 | GET | `/about` | 关于页 |
 | GET | `/healthz` | 存活探针（不查库、不鉴权，返回 `200`） |
@@ -198,17 +202,19 @@ go run ./cmd/render-backfill            # 确认条数后正式回填
 
 | 码 | 场景 |
 | :--- | :--- |
+| `204` | `DELETE /admin/posts/{id}`、`DELETE /admin/projects/{id}` 成功（无响应体） |
+| `303` | 页面路由未登录 → 跳转登录页 |
 | `400` | 表单校验失败 / 路径变量非法（如 `id` 非整数） |
 | `401` | API 路由未登录 |
 | `404` | 资源不存在（含 `projects.ErrNotFound`） |
 | `409` | slug 重复（`projects.ErrDuplicate`） |
 | `413` | 请求体超过 `MaxUploadBytes` |
-| `303` | 页面路由未登录 → 跳转登录页 |
+| `429` | 登录失败次数达到窗口配额（默认 5 次 / 60s），页面与 JSON 接口同一阈值 |
 
 ## 上传与附件
 
 - 请求体上限：`60 MiB`（`http.MaxBytesReader`），超出 → `413`；读请求体的总时长受 `ReadTimeout`（`120s`）约束。
-- 仅接受 **ZIP**：读取前 4 字节做魔数校验，必须是 `50 4B 03 04`（`PK\x03\x04`）。
+- 仅接受 **ZIP**：读取前 4 字节做魔数校验，必须是 `50 4B 03 04`（`PK\x03\x04`），不信扩展名。
 - 落盘文件名：16 字节随机数生成，避免用户可控路径。
 - 存储位置：`UploadsDir`（默认 `./data/uploads`），数据库只存文件名。
 - 下载：`GET /projects/{id}/download`，响应头带 `Attachment`，由 `http.ServeFile` 发送。
@@ -269,17 +275,17 @@ docker build \
 | 字段 | 说明 |
 | :--- | :--- |
 | `ports` | 形如 `<本机地址>:5200:5200`，绑定到具体网卡地址 |
-| `volumes` | `./data:/app/data`（相对 compose 文件所在目录，即 `docker/data`） |
+| `volumes` | `./data:/app/data`（相对 compose 文件所在目录）。仓库内这份是样例；生产实际运行部署机 `100.64.0.1`（CI 脚本里叫 `MP9_HOST`）上 `/home/lonelyhorse/server/homelab-blog/` 的 compose 文件，数据落在同目录的 `data/` |
 | `environment` | `SESSION_COOKIE_SECURE`、`TZ=Asia/Shanghai` |
 | `restart` | `unless-stopped` |
 
 **部署注意**
 
-- 建议为镜像打**版本 tag**（如 `:1.0.0`）而非 `:latest`，便于回滚。
+- 部署脚本按 `v<YY.MM.DD>` 打版本 tag（如 `v26.11.28`），`latest` 同时指向它；回滚时改 compose 里的 tag 再 `up -d`。
 - 挂载宿主机目录要**先手工创建**，并保证其属主数字与容器运行用户一致；否则容器内进程将无写权限。
 - 用 HTTPS / 反代对外时，务必把 `SESSION_COOKIE_SECURE` 设为 `true`。
 
 ## 相关文档
 
 - [技术文档-v2.0.md](document/技术文档-v2.0.md)——完整设计：系统架构、路由表、数据模型、解析器铁律、部署方案、验收清单、决策记录（ADR）；文档内已标注「已实现 / 未实现」。
-- [技术文档.md](document/技术文档.md)——v1.9 设计冻结版，仅作历史存档，不再更新。
+- [技术文档.md](document/技术文档.md)——v1.9 设计冻结版，仅作历史存档；**该文件被 `.gitignore` 忽略、不在版本库**，clone 后不存在，只在本机保留。
